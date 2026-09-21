@@ -20,6 +20,8 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    console.log("=== WEBHOOK RECIBIDO ===");
+    console.log(JSON.stringify(body, null, 2));
 
     if (body.object === 'whatsapp_business_account') {
       const entry = body.entry?.[0];
