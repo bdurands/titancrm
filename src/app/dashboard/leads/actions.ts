@@ -133,8 +133,9 @@ export async function convertToClient(formData: FormData) {
     revalidatePath('/dashboard/leads');
     revalidatePath('/dashboard/clientes');
     return { success: true };
-  } catch (e) {
-    return { error: 'Error al convertir a cliente.' };
+  } catch (e: any) {
+    console.error("Error en convertToClient:", e);
+    return { error: 'Error BD: ' + (e.message || String(e)) };
   }
 }
 
