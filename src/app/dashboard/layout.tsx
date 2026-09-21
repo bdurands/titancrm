@@ -28,7 +28,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         <nav className="sidebar-nav">
           <Link href="/dashboard" className="nav-link"><Home size={17} /> Inicio</Link>
-          <Link href="/dashboard/leads" className="nav-link nav-link-leads"><MessageSquareText size={17} /> Leads (Chats)</Link>
+          <Link href="/dashboard/inbox" className="nav-link nav-link-leads"><MessageSquareText size={17} /> Bandeja (Inbox)</Link>
+          <Link href="/dashboard/leads" className="nav-link"><ArrowRightLeft size={17} /> Leads (Kanban)</Link>
           <Link href="/dashboard/clientes" className="nav-link"><Users size={17} /> Clientes</Link>
           <Link href="/dashboard/vendedores" className="nav-link"><UserSquare2 size={17} /> Vendedores</Link>
           <Link href="/dashboard/ladrillos" className="nav-link"><Cuboid size={17} /> Ladrillos</Link>
