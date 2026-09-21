@@ -1,11 +1,12 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react';
-import { updateEstadoLead, sendMensajeToLead, convertToClient, getConversaciones } from '../leads/actions';
+import { updateEstadoLead, sendMensajeToLead, convertToClient, getConversaciones, updateNombreLead, updateNotasLead, updateEtiquetasLead } from '../leads/actions';
 
 type Mensaje = { id: string; cuerpo: string; es_entrante: boolean; fecha: Date };
 type Conversacion = {
   id: string; origen: string; contacto_id: string; nombre_prospecto: string; estado: string; 
+  etiquetas?: string | null; notas?: string | null; foto_perfil?: string | null;
   mensajes: Mensaje[]; ultima_actividad: Date;
 };
 
@@ -18,6 +19,20 @@ export default function InboxClient({ initialConversaciones }: { initialConversa
   const [searchTerm, setSearchTerm] = useState('');
   const [filterEstado, setFilterEstado] = useState<string>('Todos');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [tempName, setTempName] = useState('');
+  const [notasText, setNotasText] = useState('');
+  const [tagInput, setTagInput] = useState('');
+
+  // Sincronizar datos al cambiar de chat
+  useEffect(() => {
+    if (activeChat) {
+      setTempName(activeChat.nombre_prospecto);
+      setNotasText(activeChat.notas || '');
+      setIsEditingName(false);
+    }
+  }, [activeChat?.id]);
 
   // Auto-refresh (Polling)
   useEffect(() => {
@@ -81,6 +96,58 @@ export default function InboxClient({ initialConversaciones }: { initialConversa
     if (res.success) {
       setConversaciones(conversaciones.map(c => c.id === activeChat.id ? { ...c, estado: nuevoEstado } : c));
       setActiveChat({ ...activeChat, estado: nuevoEstado });
+    }
+  };
+
+  const handleSaveName = async () => {
+    if (!activeChat || !tempName.trim()) return;
+    const res = await updateNombreLead(activeChat.id, tempName.trim());
+    if (res.success) {
+      setConversaciones(conversaciones.map(c => c.id === activeChat.id ? { ...c, nombre_prospecto: tempName.trim() } : c));
+      setActiveChat({ ...activeChat, nombre_prospecto: tempName.trim() });
+      setIsEditingName(false);
+    }
+  };
+
+  const handleSaveNotas = async () => {
+    if (!activeChat) return;
+    const res = await updateNotasLead(activeChat.id, notasText);
+    if (res.success) {
+      setConversaciones(conversaciones.map(c => c.id === activeChat.id ? { ...c, notas: notasText } : c));
+      setActiveChat({ ...activeChat, notas: notasText });
+      alert('Notas guardadas');
+    }
+  };
+
+  const handleAddTag = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeChat || !tagInput.trim()) return;
+    
+    const tagsArray = activeChat.etiquetas ? activeChat.etiquetas.split(',').map(t => t.trim()) : [];
+    if (tagsArray.includes(tagInput.trim())) return; // Ya existe
+    
+    tagsArray.push(tagInput.trim());
+    const newTags = tagsArray.join(',');
+    
+    const res = await updateEtiquetasLead(activeChat.id, newTags);
+    if (res.success) {
+      setConversaciones(conversaciones.map(c => c.id === activeChat.id ? { ...c, etiquetas: newTags } : c));
+      setActiveChat({ ...activeChat, etiquetas: newTags });
+      setTagInput('');
+    }
+  };
+
+  const handleRemoveTag = async (tagToRemove: string) => {
+    if (!activeChat || !activeChat.etiquetas) return;
+    
+    let tagsArray = activeChat.etiquetas.split(',').map(t => t.trim());
+    tagsArray = tagsArray.filter(t => t !== tagToRemove);
+    const newTags = tagsArray.join(',');
+    
+    const res = await updateEtiquetasLead(activeChat.id, newTags);
+    if (res.success) {
+      setConversaciones(conversaciones.map(c => c.id === activeChat.id ? { ...c, etiquetas: newTags } : c));
+      setActiveChat({ ...activeChat, etiquetas: newTags });
     }
   };
 
@@ -150,19 +217,34 @@ export default function InboxClient({ initialConversaciones }: { initialConversa
                 transition: 'background 0.2s'
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-                <span style={{ fontWeight: 600, fontSize: '0.9rem', color: activeChat?.id === c.id ? 'var(--primary)' : '#0f172a' }}>
-                  {c.nombre_prospecto}
-                </span>
-                <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
-                  {new Date(c.ultima_actividad).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </span>
-              </div>
-              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.9rem' }}>{c.origen === 'whatsapp' ? '🟢' : '🔵'}</span>
-                <span style={{ fontSize: '0.8rem', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {c.mensajes.length > 0 ? c.mensajes[c.mensajes.length - 1].cuerpo : 'Sin mensajes'}
-                </span>
+              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', flexShrink: 0, backgroundImage: c.foto_perfil ? `url(${c.foto_perfil})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+                  {!c.foto_perfil && c.nombre_prospecto.charAt(0).toUpperCase()}
+                </div>
+                <div style={{ flex: 1, overflow: 'hidden' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                    <span style={{ fontWeight: 600, fontSize: '0.9rem', color: activeChat?.id === c.id ? 'var(--primary)' : '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {c.nombre_prospecto}
+                    </span>
+                    <span style={{ fontSize: '0.7rem', color: '#94a3b8', flexShrink: 0 }}>
+                      {new Date(c.ultima_actividad).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.9rem' }}>{c.origen === 'whatsapp' ? '🟢' : '🔵'}</span>
+                    <span style={{ fontSize: '0.8rem', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {c.mensajes.length > 0 ? c.mensajes[c.mensajes.length - 1].cuerpo : 'Sin mensajes'}
+                    </span>
+                  </div>
+                  {c.etiquetas && (
+                    <div style={{ display: 'flex', gap: '0.25rem', marginTop: '0.35rem', flexWrap: 'nowrap', overflowX: 'hidden' }}>
+                      {c.etiquetas.split(',').slice(0, 2).map((t, i) => (
+                        <span key={i} style={{ background: '#e0e7ff', color: '#4338ca', fontSize: '0.65rem', padding: '0.1rem 0.4rem', borderRadius: '4px', whiteSpace: 'nowrap' }}>{t.trim()}</span>
+                      ))}
+                      {c.etiquetas.split(',').length > 2 && <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>+</span>}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           ))}
@@ -237,14 +319,27 @@ export default function InboxClient({ initialConversaciones }: { initialConversa
       {activeChat && (
         <div style={{ width: '280px', borderLeft: '1px solid var(--border-color)', background: '#fff', display: 'flex', flexDirection: 'column' }}>
           <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)', textAlign: 'center' }}>
-             <div style={{ width: '64px', height: '64px', background: 'var(--primary)', color: '#fff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 600, margin: '0 auto 1rem' }}>
-               {activeChat.nombre_prospecto.charAt(0).toUpperCase()}
+             <div style={{ width: '64px', height: '64px', background: 'var(--primary)', color: '#fff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 600, margin: '0 auto 1rem', backgroundImage: activeChat.foto_perfil ? `url(${activeChat.foto_perfil})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+               {!activeChat.foto_perfil && activeChat.nombre_prospecto.charAt(0).toUpperCase()}
              </div>
-             <h3 style={{ fontSize: '1.1rem', fontWeight: 700 }}>{activeChat.nombre_prospecto}</h3>
+             
+             {isEditingName ? (
+                <div style={{ display: 'flex', gap: '0.25rem', justifyContent: 'center' }}>
+                  <input type="text" value={tempName} onChange={e => setTempName(e.target.value)} className="pro-input" style={{ padding: '0.25rem 0.5rem', fontSize: '0.9rem', width: '150px' }} autoFocus />
+                  <button onClick={handleSaveName} style={{ background: 'var(--success)', color: 'white', border: 'none', borderRadius: '4px', padding: '0 0.5rem', cursor: 'pointer' }}>✓</button>
+                  <button onClick={() => setIsEditingName(false)} style={{ background: 'var(--danger)', color: 'white', border: 'none', borderRadius: '4px', padding: '0 0.5rem', cursor: 'pointer' }}>X</button>
+                </div>
+             ) : (
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                  {activeChat.nombre_prospecto}
+                  <span onClick={() => setIsEditingName(true)} style={{ fontSize: '0.8rem', cursor: 'pointer', color: '#94a3b8' }}>✏️</span>
+                </h3>
+             )}
+
              <p style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.25rem' }}>{activeChat.origen === 'whatsapp' ? 'WhatsApp Business' : 'Facebook Messenger'}</p>
           </div>
           
-          <div style={{ padding: '1.5rem', flex: 1 }}>
+          <div style={{ padding: '1.5rem', flex: 1, overflowY: 'auto' }}>
             <h4 style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#94a3b8', fontWeight: 700, marginBottom: '0.75rem' }}>Detalles</h4>
             
             <div style={{ marginBottom: '1rem' }}>
@@ -263,6 +358,32 @@ export default function InboxClient({ initialConversaciones }: { initialConversa
                 {ESTADOS.map(op => <option key={op} value={op}>{op}</option>)}
               </select>
             </div>
+
+            <hr style={{ border: 'none', borderTop: '1px solid var(--border-color)', margin: '1.5rem 0' }} />
+
+            <h4 style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#94a3b8', fontWeight: 700, marginBottom: '0.75rem' }}>Etiquetas</h4>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.5rem' }}>
+              {activeChat.etiquetas?.split(',').map((t, i) => t.trim() ? (
+                <span key={i} style={{ background: '#e0e7ff', color: '#4338ca', fontSize: '0.75rem', padding: '0.2rem 0.5rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                  {t.trim()}
+                  <span onClick={() => handleRemoveTag(t.trim())} style={{ cursor: 'pointer', opacity: 0.6 }}>&times;</span>
+                </span>
+              ) : null)}
+            </div>
+            <form onSubmit={handleAddTag} style={{ display: 'flex', gap: '0.25rem', marginBottom: '1.5rem' }}>
+              <input type="text" placeholder="Nueva etiqueta..." value={tagInput} onChange={e => setTagInput(e.target.value)} className="pro-input" style={{ padding: '0.3rem 0.5rem', fontSize: '0.75rem' }} />
+              <button type="submit" className="pro-btn" style={{ padding: '0.3rem 0.5rem', fontSize: '0.75rem' }}>+</button>
+            </form>
+
+            <h4 style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#94a3b8', fontWeight: 700, marginBottom: '0.75rem' }}>Notas Internas</h4>
+            <textarea 
+              value={notasText} 
+              onChange={e => setNotasText(e.target.value)}
+              className="pro-input" 
+              placeholder="Anota algo sobre este cliente..."
+              style={{ width: '100%', minHeight: '80px', padding: '0.5rem', fontSize: '0.85rem', resize: 'vertical', marginBottom: '0.5rem' }}
+            />
+            <button onClick={handleSaveNotas} className="pro-btn-secondary" style={{ width: '100%', padding: '0.4rem', fontSize: '0.75rem', borderRadius: '6px' }}>Guardar Notas</button>
 
             <hr style={{ border: 'none', borderTop: '1px solid var(--border-color)', margin: '1.5rem 0' }} />
 

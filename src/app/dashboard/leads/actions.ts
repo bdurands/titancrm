@@ -137,3 +137,34 @@ export async function convertToClient(formData: FormData) {
     return { error: 'Error al convertir a cliente.' };
   }
 }
+
+export async function updateNombreLead(id: string, nombre: string) {
+  try {
+    await prisma.conversacion.update({ where: { id }, data: { nombre_prospecto: nombre } });
+    revalidatePath('/dashboard/inbox');
+    return { success: true };
+  } catch (e) {
+    return { error: 'Error al actualizar el nombre.' };
+  }
+}
+
+export async function updateNotasLead(id: string, notas: string) {
+  try {
+    await prisma.conversacion.update({ where: { id }, data: { notas } });
+    revalidatePath('/dashboard/inbox');
+    return { success: true };
+  } catch (e) {
+    return { error: 'Error al guardar notas.' };
+  }
+}
+
+export async function updateEtiquetasLead(id: string, etiquetas: string) {
+  try {
+    await prisma.conversacion.update({ where: { id }, data: { etiquetas } });
+    revalidatePath('/dashboard/inbox');
+    return { success: true };
+  } catch (e) {
+    return { error: 'Error al guardar etiquetas.' };
+  }
+}
+

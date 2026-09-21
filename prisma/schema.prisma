@@ -206,6 +206,11 @@ model Conversacion {
   estado           String    @default("Nuevos") // Nuevos, Negociando, Convertidos
   fecha_creacion   DateTime  @default(now())
   ultima_actividad DateTime  @default(now())
+  
+  etiquetas        String?   @db.Text
+  notas            String?   @db.Text
+  foto_perfil      String?   @db.Text
+  
   mensajes         Mensaje[]
 
   @@map("conversaciones")
