@@ -1,0 +1,223 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id       String @id @default(uuid())
+  nombre   String @unique
+  password String
+  
+  @@map("usuarios")
+}
+
+model Cliente {
+  id       String @id @default(uuid())
+  nombres  String
+  celular  String
+  origen   String // WhatsApp, Facebook, Directo
+  estado   String // Lead, Cliente Activo
+  pedidos  Pedido[]
+
+  @@map("clientes")
+}
+
+model Camion {
+  id          String      @id @default(uuid())
+  marca       String
+  modelo      String
+  placa       String      @unique
+  conductores Conductor[]
+  pedidos     Pedido[]
+  mantenimientos Mantenimiento[]
+  sinotrack_device_id String?
+  sinotrack_password  String?
+
+  @@map("camiones")
+}
+
+model Conductor {
+  id                 String  @id @default(uuid())
+  nombres_apellidos  String
+  dni                String  @unique
+  camion_asignado_id String?
+  camion_asignado    Camion? @relation(fields: [camion_asignado_id], references: [id])
+  
+  almacenes_a_cargo  Almacen[]
+  pedidos            Pedido[]
+  traslados          TrasladoInterno[]
+  mantenimientos     Mantenimiento[]
+
+  @@map("conductores")
+}
+
+model Almacen {
+  id               String      @id @default(uuid())
+  nombre           String
+  direccion        String
+  encargado_id     String?
+  encargado        Conductor?  @relation(fields: [encargado_id], references: [id])
+  es_planta_choque Boolean     @default(false)
+  
+  stock            Stock[]
+  
+  // Relaciones para pedidos y traslados
+  pedidos_origen   Pedido[]
+  traslados_origen TrasladoInterno[] @relation("OrigenTraslado")
+  traslados_destino TrasladoInterno[] @relation("DestinoTraslado")
+
+  @@map("almacenes")
+}
+
+model Producto {
+  id               String            @id @default(uuid())
+  tipo             String
+  stock            Stock[]
+  pedidos          Pedido[]
+  traslados        TrasladoInterno[]
+
+  @@map("productos")
+}
+
+model Stock {
+  id                  String   @id @default(uuid())
+  almacen_id          String
+  almacen             Almacen  @relation(fields: [almacen_id], references: [id])
+  producto_id         String
+  producto            Producto @relation(fields: [producto_id], references: [id])
+  cantidad_disponible Int      @default(0)
+
+  @@unique([almacen_id, producto_id])
+  @@map("stock")
+}
+
+model Vendedor {
+  id      String   @id @default(uuid())
+  nombre  String
+  pedidos Pedido[]
+
+  @@map("vendedores")
+}
+
+model Pedido {
+  id_pedido         Int       @id @default(autoincrement())
+  estado            String    // Creado, En Camino, Entregado, Cancelado
+  fecha             DateTime  @default(now())
+  fecha_entrega     DateTime?
+  
+  tracking_uuid     String?   @unique
+  latitud_actual    Float?
+  longitud_actual   Float?
+  
+  cliente_id        String
+  cliente           Cliente   @relation(fields: [cliente_id], references: [id])
+  direccion_entrega String
+  link_ubicacion    String?   @db.Text
+  
+  origen_almacen_id String
+  origen_almacen    Almacen   @relation(fields: [origen_almacen_id], references: [id])
+  
+  producto_id       String
+  producto          Producto  @relation(fields: [producto_id], references: [id])
+  
+  cantidad          Int
+  unidad_medida     String    // Unidades, Millares
+  total_cobrar      Decimal   @db.Decimal(10, 2)
+  tipo_pago         String    // Efectivo, Transferencia, Yape, Plin
+  
+  // Pagos previos (si es transferencia/deposito)
+  nro_operacion     String?
+  foto_comprobante  String?   @db.Text
+  fecha_operacion   DateTime?
+  
+  vendedor_id       String?
+  vendedor          Vendedor? @relation(fields: [vendedor_id], references: [id])
+  
+  conductor_id      String?
+  conductor         Conductor? @relation(fields: [conductor_id], references: [id])
+  
+  camion_id         String?
+  camion            Camion?   @relation(fields: [camion_id], references: [id])
+  
+  // App del Chofer (Despacho)
+  dispatch_uuid            String?  @unique
+  cobro_realizado_chofer   Boolean?
+  pagos_chofer             Json?    // Guarda array de pagos múltiples del chofer
+  
+  // Deprecated fields, kept to avoid data loss but not used anymore for driver payments
+  metodo_cobro_chofer      String?  
+  foto_comprobante_chofer  String?  @db.Text
+
+  @@map("pedidos")
+}
+
+model TrasladoInterno {
+  id_traslado String   @id @default(uuid())
+  fecha       DateTime @default(now())
+  
+  origen_id   String
+  origen      Almacen  @relation("OrigenTraslado", fields: [origen_id], references: [id])
+  
+  destino_id  String
+  destino     Almacen  @relation("DestinoTraslado", fields: [destino_id], references: [id])
+  
+  producto_id String
+  producto    Producto @relation(fields: [producto_id], references: [id])
+  
+  cantidad    Int
+  
+  conductor_id String
+  conductor    Conductor @relation(fields: [conductor_id], references: [id])
+  
+  estado      String   // En tránsito, Recibido
+
+  @@map("traslados_internos")
+}
+
+model Mantenimiento {
+  id           String   @id @default(uuid())
+  fecha        DateTime @default(now())
+  
+  conductor_id String
+  conductor    Conductor @relation(fields: [conductor_id], references: [id])
+  
+  camion_id    String
+  camion       Camion    @relation(fields: [camion_id], references: [id])
+  
+  tipo         String   // Mantenimiento, Reparación
+  detalle      String   @db.Text
+  costo        Decimal  @db.Decimal(10, 2)
+
+  @@map("mantenimientos")
+}
+
+model Conversacion {
+  id               String    @id @default(uuid())
+  origen           String    // "whatsapp", "facebook"
+  contacto_id      String    // Numero de telefono o ID de FB
+  nombre_prospecto String
+  estado           String    @default("Nuevos") // Nuevos, Negociando, Convertidos
+  fecha_creacion   DateTime  @default(now())
+  ultima_actividad DateTime  @default(now())
+  mensajes         Mensaje[]
+
+  @@map("conversaciones")
+}
+
+model Mensaje {
+  id               String       @id @default(uuid())
+  conversacion_id  String
+  conversacion     Conversacion @relation(fields: [conversacion_id], references: [id])
+  cuerpo           String       @db.Text
+  es_entrante      Boolean      // true si lo envia el lead, false si lo envia la empresa
+  fecha            DateTime     @default(now())
+
+  @@map("mensajes")
+}
