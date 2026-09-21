@@ -24,6 +24,28 @@ export default function InboxClient({ initialConversaciones }: { initialConversa
   const [tempName, setTempName] = useState('');
   const [notasText, setNotasText] = useState('');
   const [tagInput, setTagInput] = useState('');
+  
+  const [respuestasRapidas, setRespuestasRapidas] = useState<string[]>([]);
+  const [isConfiguringRespuestas, setIsConfiguringRespuestas] = useState(false);
+  const [newRespuesta, setNewRespuesta] = useState('');
+
+  // Cargar respuestas rápidas guardadas
+  useEffect(() => {
+    const saved = localStorage.getItem('respuestasRapidas');
+    if (saved) {
+      try {
+        setRespuestasRapidas(JSON.parse(saved));
+      } catch (e) { }
+    } else {
+      setRespuestasRapidas([
+        "¡Hola! 👋 ¿En qué te podemos ayudar?",
+        "Sí, tenemos stock disponible. 🧱",
+        "Nuestra cuenta BCP es 191-XXXXXXXX-X-XX",
+        "El pedido llegará hoy por la tarde. 🚚",
+        "¿Me podrías enviar la dirección exacta?"
+      ]);
+    }
+  }, []);
 
   // Sincronizar datos al cambiar de chat
   useEffect(() => {
@@ -76,7 +98,24 @@ export default function InboxClient({ initialConversaciones }: { initialConversa
 
   const handleConvert = async () => {
     if (!activeChat) return;
-    if (!confirm(`¿Convertir a ${activeChat.nombre_prospecto} en Cliente Oficial?`)) return;
+    const confirmacion = window.confirm(`¿Convertir a ${activeChat.nombre_prospecto} en Cliente Oficial?`);
+    if (!confirmacion) return;
+    
+    try {
+      const formData = new FormData();
+      formData.append('conversacion_id', activeChat.id);
+      
+      const res = await convertToClient(formData);
+      if (res.success) {
+        alert('¡Cliente creado exitosamente!');
+        window.location.reload();
+      } else {
+        alert('Error: ' + res.error);
+      }
+    } catch (error: any) {
+      alert('Error en la petición: ' + error.message);
+    }
+  };
     
     const formData = new FormData();
     formData.append('conversacion_id', activeChat.id);
@@ -149,6 +188,21 @@ export default function InboxClient({ initialConversaciones }: { initialConversa
       setConversaciones(conversaciones.map(c => c.id === activeChat.id ? { ...c, etiquetas: newTags } : c));
       setActiveChat({ ...activeChat, etiquetas: newTags });
     }
+  };
+
+  const handleAddRespuesta = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newRespuesta.trim()) return;
+    const updated = [...respuestasRapidas, newRespuesta.trim()];
+    setRespuestasRapidas(updated);
+    localStorage.setItem('respuestasRapidas', JSON.stringify(updated));
+    setNewRespuesta('');
+  };
+
+  const handleRemoveRespuesta = (index: number) => {
+    const updated = respuestasRapidas.filter((_, i) => i !== index);
+    setRespuestasRapidas(updated);
+    localStorage.setItem('respuestasRapidas', JSON.stringify(updated));
   };
 
   // Filtrado
@@ -295,23 +349,39 @@ export default function InboxClient({ initialConversaciones }: { initialConversa
             </div>
 
             {/* Respuestas Rápidas */}
-            <div style={{ padding: '0.5rem 1.5rem', background: '#fff', borderTop: '1px solid var(--border-color)', display: 'flex', gap: '0.5rem', overflowX: 'auto' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', display: 'flex', alignItems: 'center' }}>⚡ Rápidas:</span>
-              {[
-                "¡Hola! 👋 ¿En qué te podemos ayudar?",
-                "Sí, tenemos stock disponible. 🧱",
-                "Nuestra cuenta BCP es 191-XXXXXXXX-X-XX",
-                "El pedido llegará hoy por la tarde. 🚚",
-                "¿Me podrías enviar la dirección exacta?"
-              ].map((rr, i) => (
-                <button 
-                  key={i} 
-                  onClick={() => setMensajeText(rr)} 
-                  style={{ background: '#f8fafc', color: '#475569', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '0.3rem 0.6rem', fontSize: '0.75rem', whiteSpace: 'nowrap', cursor: 'pointer', transition: 'background 0.2s' }}
-                >
-                  {rr.length > 20 ? rr.substring(0, 20) + '...' : rr}
-                </button>
-              ))}
+            <div style={{ padding: '0.5rem 1.5rem', background: '#fff', borderTop: '1px solid var(--border-color)' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={() => setIsConfiguringRespuestas(!isConfiguringRespuestas)}>
+                  ⚡ Rápidas (⚙️):
+                </span>
+                {respuestasRapidas.map((rr, i) => (
+                  <button 
+                    key={i} 
+                    onClick={() => setMensajeText(rr)} 
+                    style={{ background: '#f8fafc', color: '#475569', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '0.3rem 0.6rem', fontSize: '0.75rem', whiteSpace: 'nowrap', cursor: 'pointer', transition: 'background 0.2s' }}
+                  >
+                    {rr.length > 25 ? rr.substring(0, 25) + '...' : rr}
+                  </button>
+                ))}
+              </div>
+              
+              {isConfiguringRespuestas && (
+                <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <h4 style={{ fontSize: '0.75rem', fontWeight: 600, color: '#475569', marginBottom: '0.5rem' }}>Configurar Respuestas Rápidas</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginBottom: '0.75rem' }}>
+                    {respuestasRapidas.map((rr, i) => (
+                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', padding: '0.25rem 0.5rem', borderRadius: '4px', border: '1px solid #e2e8f0' }}>
+                        <span style={{ fontSize: '0.75rem', color: '#334155' }}>{rr}</span>
+                        <button onClick={() => handleRemoveRespuesta(i)} style={{ color: '#ef4444', border: 'none', background: 'none', cursor: 'pointer' }}>✖</button>
+                      </div>
+                    ))}
+                  </div>
+                  <form onSubmit={handleAddRespuesta} style={{ display: 'flex', gap: '0.5rem' }}>
+                    <input type="text" value={newRespuesta} onChange={e => setNewRespuesta(e.target.value)} placeholder="Nueva respuesta rápida..." className="pro-input" style={{ padding: '0.4rem 0.5rem', fontSize: '0.75rem', flex: 1 }} />
+                    <button type="submit" className="pro-btn" style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem' }}>Añadir</button>
+                  </form>
+                </div>
+              )}
             </div>
 
             {/* Input */}

@@ -61,7 +61,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         overflowY: 'auto',
         minHeight: '100vh',
       }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
+        <div style={{ width: '100%' }}>
           {children}
         </div>
       </main>
