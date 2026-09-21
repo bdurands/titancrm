@@ -291,6 +291,26 @@ export default function InboxClient({ initialConversaciones }: { initialConversa
               <div ref={messagesEndRef} />
             </div>
 
+            {/* Respuestas Rápidas */}
+            <div style={{ padding: '0.5rem 1.5rem', background: '#fff', borderTop: '1px solid var(--border-color)', display: 'flex', gap: '0.5rem', overflowX: 'auto' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', display: 'flex', alignItems: 'center' }}>⚡ Rápidas:</span>
+              {[
+                "¡Hola! 👋 ¿En qué te podemos ayudar?",
+                "Sí, tenemos stock disponible. 🧱",
+                "Nuestra cuenta BCP es 191-XXXXXXXX-X-XX",
+                "El pedido llegará hoy por la tarde. 🚚",
+                "¿Me podrías enviar la dirección exacta?"
+              ].map((rr, i) => (
+                <button 
+                  key={i} 
+                  onClick={() => setMensajeText(rr)} 
+                  style={{ background: '#f8fafc', color: '#475569', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '0.3rem 0.6rem', fontSize: '0.75rem', whiteSpace: 'nowrap', cursor: 'pointer', transition: 'background 0.2s' }}
+                >
+                  {rr.length > 20 ? rr.substring(0, 20) + '...' : rr}
+                </button>
+              ))}
+            </div>
+
             {/* Input */}
             <div style={{ padding: '1rem 1.5rem', background: '#f0f2f5' }}>
               <form onSubmit={handleSend} style={{ display: 'flex', gap: '0.75rem' }}>
