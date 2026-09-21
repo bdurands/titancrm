@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useState } from 'react';
-import { createConversacionManual, updateEstadoLead, sendMensajeToLead, convertToClient } from './actions';
+import React, { useState, useEffect } from 'react';
+import { createConversacionManual, updateEstadoLead, sendMensajeToLead, convertToClient, getConversaciones } from './actions';
 
 type Mensaje = { id: string; cuerpo: string; es_entrante: boolean; fecha: Date };
 type Conversacion = {
@@ -18,6 +18,22 @@ export default function LeadsClient({ initialConversaciones }: { initialConversa
   const [mensajeText, setMensajeText] = useState('');
   
   const [nuevoLead, setNuevoLead] = useState({ origen: 'whatsapp', contacto_id: '', nombre_prospecto: '' });
+
+  // Auto-refresh (Polling) cada 5 segundos
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const data = await getConversaciones();
+      if (data) {
+        setConversaciones(data);
+        setActiveChat(prev => {
+          if (!prev) return null;
+          const updated = data.find(c => c.id === prev.id);
+          return updated || prev;
+        });
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleAddManual = async (e: React.FormEvent) => {
     e.preventDefault();
