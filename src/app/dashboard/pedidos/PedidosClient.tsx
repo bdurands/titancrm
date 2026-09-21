@@ -119,9 +119,9 @@ export default function PedidosClient({ initialPedidos, clientes, productos, alm
     }
     
     const res = await updateEstadoPedido(id, nuevoEstado, camionId);
-    if (res.success) {
+    if ('success' in res && res.success) {
       window.location.reload();
-    } else {
+    } else if ('error' in res) {
       alert(res.error);
     }
   };
@@ -439,7 +439,7 @@ export default function PedidosClient({ initialPedidos, clientes, productos, alm
                       </button>
                       <button 
                         onClick={() => {
-                          const numero = p.cliente.celular.startsWith('51') ? p.cliente.celular : `51${p.cliente.celular}`;
+                          const numero = (p.cliente.celular ?? '').startsWith('51') ? p.cliente.celular : `51${p.cliente.celular ?? ''}`;
                           const mensaje = `Hola ${p.cliente.nombres}, somos de Grupo A&S. Su pedido de ${p.cantidad} ladrillos ${p.producto.tipo} está en estado: ${p.estado.toUpperCase()}.`;
                           window.open(`https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`, '_blank');
                         }}

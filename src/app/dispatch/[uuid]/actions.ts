@@ -1,6 +1,6 @@
 'use server'
 
-import { PrismaClient } from '@prisma/client'
+import { Prisma, PrismaClient } from '@prisma/client'
 import fs from 'fs'
 import path from 'path'
 import { revalidatePath } from 'next/cache'
@@ -85,7 +85,7 @@ export async function marcarComoEntregado(formData: FormData) {
         data: {
           estado: 'entregado',
           cobro_realizado_chofer: cobro_realizado,
-          pagos_chofer: pagosArray.length > 0 ? JSON.stringify(pagosArray) : null,
+          pagos_chofer: pagosArray.length > 0 ? pagosArray : Prisma.JsonNull,
           tipo_pago: nuevoTipoPago
         }
       });

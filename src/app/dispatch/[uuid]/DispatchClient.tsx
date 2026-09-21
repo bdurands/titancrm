@@ -66,9 +66,9 @@ export default function DispatchClient({ pedido }: { pedido: any }) {
     }
 
     const res = await marcarComoEntregado(fd);
-    if (res.success) {
+    if ('success' in res && res.success) {
       setSuccess(true);
-    } else {
+    } else if ('error' in res) {
       alert(res.error);
       setLoading(false);
     }

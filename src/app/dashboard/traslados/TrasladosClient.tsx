@@ -69,9 +69,9 @@ export default function TrasladosClient({ initialTraslados, almacenes, productos
     Object.entries(formData).forEach(([k, v]) => data.append(k, v));
     
     const res = await createTraslado(data);
-    if (res.success) {
+    if ('success' in res && res.success) {
       window.location.reload(); 
-    } else {
+    } else if ('error' in res) {
       alert(res.error);
       setLoading(false);
     }
@@ -81,9 +81,9 @@ export default function TrasladosClient({ initialTraslados, almacenes, productos
     if (!confirm('¿Confirmas que el traslado llegó al almacén de destino? El stock será actualizado automáticamente.')) return;
     
     const res = await recibirTraslado(id);
-    if (res.success) {
+    if ('success' in res && res.success) {
       window.location.reload();
-    } else {
+    } else if ('error' in res) {
       alert(res.error);
     }
   };
