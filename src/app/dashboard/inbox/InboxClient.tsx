@@ -116,18 +116,6 @@ export default function InboxClient({ initialConversaciones }: { initialConversa
       alert('Error en la petición: ' + error.message);
     }
   };
-    
-    const formData = new FormData();
-    formData.append('conversacion_id', activeChat.id);
-    
-    const res = await convertToClient(formData);
-    if (res.success) {
-      alert('¡Cliente creado exitosamente!');
-      window.location.reload();
-    } else {
-      alert(res.error);
-    }
-  };
 
   const handleStateChange = async (nuevoEstado: string) => {
     if (!activeChat) return;
