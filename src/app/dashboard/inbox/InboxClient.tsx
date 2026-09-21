@@ -164,13 +164,16 @@ export default function InboxClient({ initialConversaciones }: { initialConversa
       display: 'flex', 
       background: '#fff', 
       borderRadius: '12px',
-      overflow: 'hidden',
+      overflowX: 'auto',
+      overflowY: 'hidden',
       boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-      border: '1px solid var(--border-color)'
+      border: '1px solid var(--border-color)',
+      width: '100%',
+      minWidth: '800px'
     }}>
       
       {/* PANEL 1: LISTA DE CHATS */}
-      <div style={{ width: '320px', borderRight: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', background: '#f8fafc' }}>
+      <div style={{ width: '320px', flexShrink: 0, borderRight: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', background: '#f8fafc' }}>
         <div style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', background: '#fff' }}>
           <h2 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '0.75rem' }}>Bandeja de Entrada</h2>
           <input 
@@ -337,7 +340,7 @@ export default function InboxClient({ initialConversaciones }: { initialConversa
 
       {/* PANEL 3: INFO DEL CONTACTO */}
       {activeChat && (
-        <div style={{ width: '280px', borderLeft: '1px solid var(--border-color)', background: '#fff', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ width: '280px', flexShrink: 0, borderLeft: '1px solid var(--border-color)', background: '#fff', display: 'flex', flexDirection: 'column' }}>
           <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)', textAlign: 'center' }}>
              <div style={{ width: '64px', height: '64px', background: 'var(--primary)', color: '#fff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 600, margin: '0 auto 1rem', backgroundImage: activeChat.foto_perfil ? `url(${activeChat.foto_perfil})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center' }}>
                {!activeChat.foto_perfil && activeChat.nombre_prospecto.charAt(0).toUpperCase()}
