@@ -421,6 +421,33 @@ body {
   flex-direction: column;
 }
 
+.inbox-info-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  color: #475569;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.inbox-info-toggle:hover {
+  background: #e2e8f0;
+  color: var(--primary);
+}
+
+.inbox-info-close {
+  display: none;
+}
+
+.inbox-info-backdrop {
+  display: none;
+}
+
 .inbox-back-btn {
   display: none;
   align-items: center;
@@ -480,10 +507,35 @@ body {
   display: none;
 }
 
-/* Tablets: sidebar como overlay con hamburguesa + ocultar panel info */
+/* Tablets: sidebar como overlay con hamburguesa + panel info flotante */
 @media (max-width: 1440px) {
   .inbox-panel-info {
-    display: none;
+    position: fixed;
+    top: 0;
+    right: -320px;
+    width: 300px;
+    height: 100vh;
+    z-index: 110;
+    border-left: 1px solid var(--border-color);
+    box-shadow: -4px 0 24px rgba(0,0,0,0.12);
+    transition: right 0.3s ease;
+  }
+  .inbox-panel-info.inbox-panel-info-open {
+    right: 0;
+  }
+  .inbox-info-toggle {
+    display: flex;
+  }
+  .inbox-info-close {
+    display: flex;
+  }
+  .inbox-info-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.3);
+    z-index: 105;
+    backdrop-filter: blur(2px);
   }
   .dashboard-main {
     padding: 1rem;

@@ -28,6 +28,7 @@ export default function InboxClient({ initialConversaciones }: { initialConversa
   const [respuestasRapidas, setRespuestasRapidas] = useState<string[]>([]);
   const [isConfiguringRespuestas, setIsConfiguringRespuestas] = useState(false);
   const [newRespuesta, setNewRespuesta] = useState('');
+  const [showContactInfo, setShowContactInfo] = useState(false);
 
   // Cargar respuestas rápidas guardadas
   useEffect(() => {
@@ -308,6 +309,13 @@ export default function InboxClient({ initialConversaciones }: { initialConversa
                   <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{activeChat.contacto_id}</span>
                 </div>
               </div>
+              <button 
+                className="inbox-info-toggle"
+                onClick={() => setShowContactInfo(true)}
+                title="Ver info del contacto"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+              </button>
             </div>
 
             {/* Mensajes */}
@@ -393,95 +401,104 @@ export default function InboxClient({ initialConversaciones }: { initialConversa
         )}
       </div>
 
-      {/* PANEL 3: INFO DEL CONTACTO */}
+      {/* PANEL 3: INFO DEL CONTACTO - Fijo en desktop, flotante en tablet/móvil */}
       {activeChat && (
-        <div className="inbox-panel-info">
-          <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)', textAlign: 'center' }}>
-             <div style={{ width: '64px', height: '64px', background: 'var(--primary)', color: '#fff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 600, margin: '0 auto 1rem', backgroundImage: activeChat.foto_perfil ? `url(${activeChat.foto_perfil})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center' }}>
-               {!activeChat.foto_perfil && activeChat.nombre_prospecto.charAt(0).toUpperCase()}
-             </div>
-             
-             {isEditingName ? (
-                <div style={{ display: 'flex', gap: '0.25rem', justifyContent: 'center' }}>
-                  <input type="text" value={tempName} onChange={e => setTempName(e.target.value)} className="pro-input" style={{ padding: '0.25rem 0.5rem', fontSize: '0.9rem', width: '150px' }} autoFocus />
-                  <button onClick={handleSaveName} style={{ background: 'var(--success)', color: 'white', border: 'none', borderRadius: '4px', padding: '0 0.5rem', cursor: 'pointer' }}>✓</button>
-                  <button onClick={() => setIsEditingName(false)} style={{ background: 'var(--danger)', color: 'white', border: 'none', borderRadius: '4px', padding: '0 0.5rem', cursor: 'pointer' }}>X</button>
-                </div>
-             ) : (
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                  {activeChat.nombre_prospecto}
-                  <span onClick={() => setIsEditingName(true)} style={{ fontSize: '0.8rem', cursor: 'pointer', color: '#94a3b8' }}>✏️</span>
-                </h3>
-             )}
-
-             <p style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.25rem' }}>{activeChat.origen === 'whatsapp' ? 'WhatsApp Business' : 'Facebook Messenger'}</p>
-          </div>
-          
-          <div style={{ padding: '1.5rem', flex: 1, overflowY: 'auto' }}>
-            <h4 style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#94a3b8', fontWeight: 700, marginBottom: '0.75rem' }}>Detalles</h4>
-            
-            <div style={{ marginBottom: '1rem' }}>
-              <label style={{ fontSize: '0.75rem', color: '#64748b' }}>Teléfono / ID</label>
-              <div style={{ fontSize: '0.9rem', fontWeight: 500 }}>{activeChat.contacto_id}</div>
-            </div>
-
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ fontSize: '0.75rem', color: '#64748b', display: 'block', marginBottom: '0.25rem' }}>Estado del Lead</label>
-              <select 
-                value={activeChat.estado} 
-                onChange={(e) => handleStateChange(e.target.value)}
-                className="pro-input"
-                style={{ padding: '0.5rem', fontSize: '0.85rem' }}
-              >
-                {ESTADOS.map(op => <option key={op} value={op}>{op}</option>)}
-              </select>
-            </div>
-
-            <hr style={{ border: 'none', borderTop: '1px solid var(--border-color)', margin: '1.5rem 0' }} />
-
-            <h4 style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#94a3b8', fontWeight: 700, marginBottom: '0.75rem' }}>Etiquetas</h4>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.5rem' }}>
-              {activeChat.etiquetas?.split(',').map((t, i) => t.trim() ? (
-                <span key={i} style={{ background: '#e0e7ff', color: '#4338ca', fontSize: '0.75rem', padding: '0.2rem 0.5rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                  {t.trim()}
-                  <span onClick={() => handleRemoveTag(t.trim())} style={{ cursor: 'pointer', opacity: 0.6 }}>&times;</span>
-                </span>
-              ) : null)}
-            </div>
-            <form onSubmit={handleAddTag} style={{ display: 'flex', gap: '0.25rem', marginBottom: '1.5rem' }}>
-              <input type="text" placeholder="Nueva etiqueta..." value={tagInput} onChange={e => setTagInput(e.target.value)} className="pro-input" style={{ padding: '0.3rem 0.5rem', fontSize: '0.75rem' }} />
-              <button type="submit" className="pro-btn" style={{ padding: '0.3rem 0.5rem', fontSize: '0.75rem' }}>+</button>
-            </form>
-
-            <h4 style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#94a3b8', fontWeight: 700, marginBottom: '0.75rem' }}>Notas Internas</h4>
-            <textarea 
-              value={notasText} 
-              onChange={e => setNotasText(e.target.value)}
-              className="pro-input" 
-              placeholder="Anota algo sobre este cliente..."
-              style={{ width: '100%', minHeight: '80px', padding: '0.5rem', fontSize: '0.85rem', resize: 'vertical', marginBottom: '0.5rem' }}
-            />
-            <button onClick={handleSaveNotas} className="pro-btn-secondary" style={{ width: '100%', padding: '0.4rem', fontSize: '0.75rem', borderRadius: '6px' }}>Guardar Notas</button>
-
-            <hr style={{ border: 'none', borderTop: '1px solid var(--border-color)', margin: '1.5rem 0' }} />
-
-            {activeChat.estado !== 'Convertidos' && (
-              <button 
-                onClick={handleConvert} 
-                className="pro-btn" 
-                style={{ width: '100%', background: 'linear-gradient(135deg, #10b981, #059669)', fontSize: '0.85rem' }}
-              >
-                ⭐ Convertir a Cliente
+        <>
+          {showContactInfo && <div className="inbox-info-backdrop" onClick={() => setShowContactInfo(false)} />}
+          <div className={`inbox-panel-info ${showContactInfo ? 'inbox-panel-info-open' : ''}`}>
+            <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#334155' }}>Info del Contacto</h4>
+              <button className="inbox-info-close" onClick={() => setShowContactInfo(false)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '0.25rem', borderRadius: '6px' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
-            )}
+            </div>
+            <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)', textAlign: 'center' }}>
+               <div style={{ width: '64px', height: '64px', background: 'var(--primary)', color: '#fff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 600, margin: '0 auto 1rem', backgroundImage: activeChat.foto_perfil ? `url(${activeChat.foto_perfil})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+                 {!activeChat.foto_perfil && activeChat.nombre_prospecto.charAt(0).toUpperCase()}
+               </div>
+               
+               {isEditingName ? (
+                  <div style={{ display: 'flex', gap: '0.25rem', justifyContent: 'center' }}>
+                    <input type="text" value={tempName} onChange={e => setTempName(e.target.value)} className="pro-input" style={{ padding: '0.25rem 0.5rem', fontSize: '0.9rem', width: '150px' }} autoFocus />
+                    <button onClick={handleSaveName} style={{ background: 'var(--success)', color: 'white', border: 'none', borderRadius: '4px', padding: '0 0.5rem', cursor: 'pointer' }}>✓</button>
+                    <button onClick={() => setIsEditingName(false)} style={{ background: 'var(--danger)', color: 'white', border: 'none', borderRadius: '4px', padding: '0 0.5rem', cursor: 'pointer' }}>X</button>
+                  </div>
+               ) : (
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                    {activeChat.nombre_prospecto}
+                    <span onClick={() => setIsEditingName(true)} style={{ fontSize: '0.8rem', cursor: 'pointer', color: '#94a3b8' }}>✏️</span>
+                  </h3>
+               )}
+
+               <p style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.25rem' }}>{activeChat.origen === 'whatsapp' ? 'WhatsApp Business' : 'Facebook Messenger'}</p>
+            </div>
             
-            {activeChat.estado === 'Convertidos' && (
-              <div style={{ textAlign: 'center', padding: '0.75rem', background: '#ecfdf5', color: '#059669', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 600 }}>
-                ✓ Cliente Oficial
+            <div style={{ padding: '1.5rem', flex: 1, overflowY: 'auto' }}>
+              <h4 style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#94a3b8', fontWeight: 700, marginBottom: '0.75rem' }}>Detalles</h4>
+              
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ fontSize: '0.75rem', color: '#64748b' }}>Teléfono / ID</label>
+                <div style={{ fontSize: '0.9rem', fontWeight: 500 }}>{activeChat.contacto_id}</div>
               </div>
-            )}
+
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={{ fontSize: '0.75rem', color: '#64748b', display: 'block', marginBottom: '0.25rem' }}>Estado del Lead</label>
+                <select 
+                  value={activeChat.estado} 
+                  onChange={(e) => handleStateChange(e.target.value)}
+                  className="pro-input"
+                  style={{ padding: '0.5rem', fontSize: '0.85rem' }}
+                >
+                  {ESTADOS.map(op => <option key={op} value={op}>{op}</option>)}
+                </select>
+              </div>
+
+              <hr style={{ border: 'none', borderTop: '1px solid var(--border-color)', margin: '1.5rem 0' }} />
+
+              <h4 style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#94a3b8', fontWeight: 700, marginBottom: '0.75rem' }}>Etiquetas</h4>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.5rem' }}>
+                {activeChat.etiquetas?.split(',').map((t, i) => t.trim() ? (
+                  <span key={i} style={{ background: '#e0e7ff', color: '#4338ca', fontSize: '0.75rem', padding: '0.2rem 0.5rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    {t.trim()}
+                    <span onClick={() => handleRemoveTag(t.trim())} style={{ cursor: 'pointer', opacity: 0.6 }}>&times;</span>
+                  </span>
+                ) : null)}
+              </div>
+              <form onSubmit={handleAddTag} style={{ display: 'flex', gap: '0.25rem', marginBottom: '1.5rem' }}>
+                <input type="text" placeholder="Nueva etiqueta..." value={tagInput} onChange={e => setTagInput(e.target.value)} className="pro-input" style={{ padding: '0.3rem 0.5rem', fontSize: '0.75rem' }} />
+                <button type="submit" className="pro-btn" style={{ padding: '0.3rem 0.5rem', fontSize: '0.75rem' }}>+</button>
+              </form>
+
+              <h4 style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#94a3b8', fontWeight: 700, marginBottom: '0.75rem' }}>Notas Internas</h4>
+              <textarea 
+                value={notasText} 
+                onChange={e => setNotasText(e.target.value)}
+                className="pro-input" 
+                placeholder="Anota algo sobre este cliente..."
+                style={{ width: '100%', minHeight: '80px', padding: '0.5rem', fontSize: '0.85rem', resize: 'vertical', marginBottom: '0.5rem' }}
+              />
+              <button onClick={handleSaveNotas} className="pro-btn-secondary" style={{ width: '100%', padding: '0.4rem', fontSize: '0.75rem', borderRadius: '6px' }}>Guardar Notas</button>
+
+              <hr style={{ border: 'none', borderTop: '1px solid var(--border-color)', margin: '1.5rem 0' }} />
+
+              {activeChat.estado !== 'Convertidos' && (
+                <button 
+                  onClick={handleConvert} 
+                  className="pro-btn" 
+                  style={{ width: '100%', background: 'linear-gradient(135deg, #10b981, #059669)', fontSize: '0.85rem' }}
+                >
+                  ⭐ Convertir a Cliente
+                </button>
+              )}
+              
+              {activeChat.estado === 'Convertidos' && (
+                <div style={{ textAlign: 'center', padding: '0.75rem', background: '#ecfdf5', color: '#059669', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 600 }}>
+                  ✓ Cliente Oficial
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        </>
       )}
 
     </div>
