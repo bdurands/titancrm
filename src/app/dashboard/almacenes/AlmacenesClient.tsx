@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react';
-import { createAlmacen, deleteAlmacen } from './actions';
+import { createAlmacen, deleteAlmacen, updateAlmacen } from './actions';
 
 type Almacen = {
   id: string;
@@ -19,6 +19,9 @@ export default function AlmacenesClient({ initialAlmacenes }: { initialAlmacenes
   const [newAlmacen, setNewAlmacen] = useState({ nombre: '', direccion: '', es_planta_choque: false });
   const [loading, setLoading] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const [editingAlmacen, setEditingAlmacen] = useState<Almacen | null>(null);
+  const [editForm, setEditForm] = useState({ nombre: '', direccion: '', es_planta_choque: false });
 
   const filteredAlmacenes = almacenes.filter(a => 
     a.nombre.toLowerCase().includes(filter.toLowerCase()) || 
@@ -54,6 +57,36 @@ export default function AlmacenesClient({ initialAlmacenes }: { initialAlmacenes
       window.location.reload();
     } else {
       alert(res.error);
+    }
+  };
+
+  const handleEditClick = (almacen: Almacen) => {
+    setEditForm({
+      nombre: almacen.nombre,
+      direccion: almacen.direccion,
+      es_planta_choque: almacen.es_planta_choque
+    });
+    setEditingAlmacen(almacen);
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingAlmacen) return;
+    setLoading(true);
+    
+    const formData = new FormData();
+    formData.append('nombre', editForm.nombre);
+    formData.append('direccion', editForm.direccion);
+    if (editForm.es_planta_choque) {
+      formData.append('es_planta_choque', 'on');
+    }
+    
+    const res = await updateAlmacen(editingAlmacen.id, formData);
+    if (res.success) {
+      window.location.reload();
+    } else {
+      alert(res.error);
+      setLoading(false);
     }
   };
 
@@ -184,12 +217,20 @@ export default function AlmacenesClient({ initialAlmacenes }: { initialAlmacenes
                     </td>
                     <td>{almacen.encargado?.nombres_apellidos || <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Sin asignar</span>}</td>
                     <td style={{ textAlign: 'right' }}>
-                      <button 
-                        onClick={() => handleDelete(almacen.id)}
-                        style={{ background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontWeight: 500, fontSize: '0.875rem' }}
-                      >
-                        Eliminar
-                      </button>
+                      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                        <button 
+                          onClick={() => handleEditClick(almacen)}
+                          style={{ background: '#f59e0b', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem' }}
+                        >
+                          Editar
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(almacen.id)}
+                          style={{ background: '#ef4444', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem' }}
+                        >
+                          Eliminar
+                        </button>
+                      </div>
                     </td>
                   </tr>
                   
@@ -228,6 +269,56 @@ export default function AlmacenesClient({ initialAlmacenes }: { initialAlmacenes
           </tbody>
         </table>
       </div>
+
+      {editingAlmacen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
+          <div className="pro-card" style={{ padding: '2rem', width: '100%', maxWidth: '500px', background: '#fff' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Editar Almacén</h2>
+              <button onClick={() => setEditingAlmacen(null)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', lineHeight: 1 }}>&times;</button>
+            </div>
+            
+            <form onSubmit={handleUpdate} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-dark)', marginBottom: '0.25rem' }}>Nombre del Almacén</label>
+                <input 
+                  type="text" 
+                  className="pro-input" 
+                  value={editForm.nombre}
+                  onChange={(e) => setEditForm({...editForm, nombre: e.target.value})}
+                  required
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-dark)', marginBottom: '0.25rem' }}>Dirección</label>
+                <input 
+                  type="text" 
+                  className="pro-input" 
+                  value={editForm.direccion}
+                  onChange={(e) => setEditForm({...editForm, direccion: e.target.value})}
+                  required
+                />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <input 
+                  type="checkbox" 
+                  id="editIsPlanta"
+                  checked={editForm.es_planta_choque}
+                  onChange={(e) => setEditForm({...editForm, es_planta_choque: e.target.checked})}
+                />
+                <label htmlFor="editIsPlanta" style={{ fontSize: '0.875rem', color: 'var(--text-dark)' }}>¿Es Planta de Choque? (Stock infinito)</label>
+              </div>
+              
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem', gap: '0.5rem' }}>
+                <button type="button" onClick={() => setEditingAlmacen(null)} className="pro-btn-secondary">Cancelar</button>
+                <button type="submit" className="pro-btn" disabled={loading}>
+                  {loading ? 'Guardando...' : 'Guardar Cambios'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

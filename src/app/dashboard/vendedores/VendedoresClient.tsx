@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react';
-import { createVendedor, deleteVendedor } from './actions';
+import { createVendedor, deleteVendedor, updateVendedor } from './actions';
 
 type Vendedor = {
   id: string;
@@ -12,6 +12,8 @@ export default function VendedoresClient({ initialVendedores }: { initialVendedo
   const [vendedores, setVendedores] = useState(initialVendedores);
   const [nombre, setNombre] = useState('');
   const [loading, setLoading] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editNombre, setEditNombre] = useState('');
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,6 +33,18 @@ export default function VendedoresClient({ initialVendedores }: { initialVendedo
   const handleDelete = async (id: string) => {
     if (!confirm('¿Seguro que deseas eliminar este vendedor?')) return;
     const res = await deleteVendedor(id);
+    if (res.success) {
+      window.location.reload();
+    } else {
+      alert(res.error);
+    }
+  };
+
+  const handleEditSave = async (id: string) => {
+    if (!editNombre.trim()) return;
+    const fd = new FormData();
+    fd.append('nombre', editNombre);
+    const res = await updateVendedor(id, fd);
     if (res.success) {
       window.location.reload();
     } else {
@@ -77,11 +91,27 @@ export default function VendedoresClient({ initialVendedores }: { initialVendedo
               ) : (
                 vendedores.map(v => (
                   <tr key={v.id}>
-                    <td style={{ fontWeight: 500, color: 'var(--text-dark)' }}>{v.nombre}</td>
+                    <td style={{ fontWeight: 500, color: 'var(--text-dark)' }}>
+                      {editingId === v.id ? (
+                        <input type="text" className="pro-input" value={editNombre} onChange={e => setEditNombre(e.target.value)} style={{ padding: '0.25rem 0.5rem' }} />
+                      ) : (
+                        v.nombre
+                      )}
+                    </td>
                     <td style={{ textAlign: 'right' }}>
-                      <button onClick={() => handleDelete(v.id)} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem' }}>
-                        Eliminar
-                      </button>
+                      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                        {editingId === v.id ? (
+                          <>
+                            <button onClick={() => setEditingId(null)} style={{ background: '#6b7280', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem' }}>Cancelar</button>
+                            <button onClick={() => handleEditSave(v.id)} style={{ background: '#10b981', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem' }}>Guardar</button>
+                          </>
+                        ) : (
+                          <>
+                            <button onClick={() => { setEditingId(v.id); setEditNombre(v.nombre); }} style={{ background: '#f59e0b', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem' }}>Editar</button>
+                            <button onClick={() => handleDelete(v.id)} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem' }}>Eliminar</button>
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))

@@ -57,3 +57,25 @@ export async function deleteAlmacen(id: string) {
     return { error: 'Error al eliminar el almacén. Podría tener stock o estar asociado a traslados.' };
   }
 }
+export async function updateAlmacen(id: string, formData: FormData) {
+  const nombre = formData.get('nombre') as string;
+  const direccion = formData.get('direccion') as string;
+  const es_planta_choque = formData.get('es_planta_choque') === 'on';
+
+  if (!nombre || !direccion) return { error: 'Nombre y dirección son requeridos' };
+
+  try {
+    await prisma.almacen.update({
+      where: { id },
+      data: { 
+        nombre,
+        direccion,
+        es_planta_choque
+      }
+    });
+    revalidatePath('/dashboard/almacenes');
+    return { success: true };
+  } catch (error) {
+    return { error: 'Error al editar el almacén' };
+  }
+}

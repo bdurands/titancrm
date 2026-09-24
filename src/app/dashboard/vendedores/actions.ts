@@ -40,3 +40,18 @@ export async function deleteVendedor(id: string) {
     return { success: false, error: error.message };
   }
 }
+export async function updateVendedor(id: string, formData: FormData) {
+  const nombre = formData.get('nombre') as string;
+  if (!nombre) return { success: false, error: 'Nombre es requerido' };
+
+  try {
+    await prisma.vendedor.update({
+      where: { id },
+      data: { nombre }
+    });
+    revalidatePath('/dashboard/vendedores');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
