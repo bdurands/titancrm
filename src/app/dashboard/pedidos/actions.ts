@@ -149,3 +149,47 @@ export async function updateEstadoPedido(id_pedido: string, nuevoEstado: string,
     revalidatePath('/dashboard/pedidos');
   }
 }
+
+export async function updatePedido(id_pedido: string, formData: FormData) {
+  try {
+    const data: any = {
+      cliente_id: formData.get('cliente_id') as string,
+      producto_id: formData.get('producto_id') as string,
+      origen_almacen_id: formData.get('origen_id') as string,
+      vendedor_id: formData.get('vendedor_id') as string,
+      cantidad: parseInt(formData.get('cantidad') as string),
+      total_cobrar: parseFloat(formData.get('total_cobrar') as string),
+      tipo_pago: formData.get('tipo_pago') as string,
+      direccion_entrega: formData.get('direccion_entrega') as string,
+    };
+
+    const linkUbicacion = formData.get('link_ubicacion');
+    if (linkUbicacion) data.link_ubicacion = linkUbicacion as string;
+
+    const fechaEntrega = formData.get('fecha_entrega');
+    if (fechaEntrega) data.fecha_entrega = new Date(fechaEntrega as string);
+
+    const conductorId = formData.get('conductor_id');
+    if (conductorId) {
+      data.conductor_id = conductorId as string;
+    } else {
+      data.conductor_id = null;
+    }
+
+    if (['Transferencia', 'Yape', 'Plin', 'Deposito'].includes(data.tipo_pago)) {
+      data.nro_operacion = formData.get('nro_operacion') as string;
+      const fOp = formData.get('fecha_operacion');
+      if (fOp) data.fecha_operacion = new Date(fOp as string);
+    }
+
+    await prisma.pedido.update({
+      where: { id_pedido: parseInt(id_pedido) },
+      data
+    });
+    
+    revalidatePath('/dashboard/pedidos');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}

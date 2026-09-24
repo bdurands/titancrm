@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react';
-import { createPedido, updateEstadoPedido } from './actions';
+import { createPedido, updateEstadoPedido, updatePedido } from './actions';
 import ExcelJS from 'exceljs';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -44,6 +44,42 @@ export default function PedidosClient({ initialPedidos, clientes, productos, alm
   const [selectedPedido, setSelectedPedido] = useState<Pedido | null>(null);
 
   const [formData, setFormData] = useState({
+    cliente_id: '',
+    producto_id: '',
+    origen_id: '',
+    cantidad: '',
+    total_cobrar: '',
+    tipo_pago: 'Efectivo',
+    fecha_entrega: '',
+    direccion_entrega: '',
+    vendedor_id: '',
+    conductor_id: '',
+    link_ubicacion: '',
+    nro_operacion: '',
+    fecha_operacion: '',
+    foto_comprobante: null as File | null
+  });
+
+  const [editingPedido, setEditingPedido] = useState<Pedido | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    cliente_id: '',
+    producto_id: '',
+    origen_id: '',
+    cantidad: '',
+    total_cobrar: '',
+    tipo_pago: 'Efectivo',
+    fecha_entrega: '',
+    direccion_entrega: '',
+    vendedor_id: '',
+    conductor_id: '',
+    link_ubicacion: '',
+    nro_operacion: '',
+    fecha_operacion: '',
+    foto_comprobante: null as File | null
+  });
+
+  const [editingPedido, setEditingPedido] = useState<Pedido | null>(null);
+  const [editFormData, setEditFormData] = useState({
     cliente_id: '',
     producto_id: '',
     origen_id: '',
@@ -123,6 +159,84 @@ export default function PedidosClient({ initialPedidos, clientes, productos, alm
       window.location.reload();
     } else if ('error' in res) {
       alert(res.error);
+    }
+  };
+
+  const handleEditClick = (p: Pedido) => {
+    setEditFormData({
+      cliente_id: p.cliente.id,
+      producto_id: p.producto.id,
+      origen_id: p.origen_almacen.id,
+      cantidad: p.cantidad.toString(),
+      total_cobrar: p.total_cobrar.toString(),
+      tipo_pago: p.tipo_pago,
+      fecha_entrega: p.fecha_entrega ? new Date(p.fecha_entrega).toISOString().slice(0,16) : '',
+      direccion_entrega: p.direccion_entrega,
+      vendedor_id: p.vendedor?.id || '',
+      conductor_id: p.conductor?.id || '',
+      link_ubicacion: p.link_ubicacion || '',
+      nro_operacion: p.nro_operacion || '',
+      fecha_operacion: p.fecha_operacion ? new Date(p.fecha_operacion).toISOString().split('T')[0] : '',
+      foto_comprobante: null
+    });
+    setEditingPedido(p);
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPedido) return;
+    setLoading(true);
+    
+    const data = new FormData();
+    Object.entries(editFormData).forEach(([k, v]) => {
+      if (v !== null && v !== '') data.append(k, v as any);
+    });
+    
+    const res = await updatePedido(editingPedido.id_pedido.toString(), data);
+    if (res.success) {
+      window.location.reload(); 
+    } else {
+      alert(res.error);
+      setLoading(false);
+    }
+  };
+
+  const handleEditClick = (p: Pedido) => {
+    setEditFormData({
+      cliente_id: p.cliente.id,
+      producto_id: p.producto.id,
+      origen_id: p.origen_almacen.id,
+      cantidad: p.cantidad.toString(),
+      total_cobrar: p.total_cobrar.toString(),
+      tipo_pago: p.tipo_pago,
+      fecha_entrega: p.fecha_entrega ? new Date(p.fecha_entrega).toISOString().slice(0,16) : '',
+      direccion_entrega: p.direccion_entrega,
+      vendedor_id: p.vendedor?.id || '',
+      conductor_id: p.conductor?.id || '',
+      link_ubicacion: p.link_ubicacion || '',
+      nro_operacion: p.nro_operacion || '',
+      fecha_operacion: p.fecha_operacion ? new Date(p.fecha_operacion).toISOString().split('T')[0] : '',
+      foto_comprobante: null
+    });
+    setEditingPedido(p);
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPedido) return;
+    setLoading(true);
+    
+    const data = new FormData();
+    Object.entries(editFormData).forEach(([k, v]) => {
+      if (v !== null && v !== '') data.append(k, v as any);
+    });
+    
+    const res = await updatePedido(editingPedido.id_pedido.toString(), data);
+    if (res.success) {
+      window.location.reload(); 
+    } else {
+      alert(res.error);
+      setLoading(false);
     }
   };
 
@@ -432,6 +546,13 @@ export default function PedidosClient({ initialPedidos, clientes, productos, alm
                   <td style={{ textAlign: 'right' }}>
                     <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                       <button 
+                        onClick={() => handleEditClick(p)}
+                        style={{ background: '#f59e0b', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}
+                        title="Editar Pedido"
+                      >
+                        Editar
+                      </button>
+                      <button 
                         onClick={() => setSelectedPedido(p)}
                         style={{ background: '#4b5563', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}
                       >
@@ -562,6 +683,127 @@ export default function PedidosClient({ initialPedidos, clientes, productos, alm
           </div>
         </div>
       )}
+
+      {/* MODAL EDITAR PEDIDO */}
+      {editingPedido && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
+          <div className="pro-card" style={{ padding: '2rem', width: '100%', maxWidth: '800px', maxHeight: '90vh', overflowY: 'auto', background: '#fff' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Editar Pedido #{editingPedido.id_pedido}</h2>
+              <button onClick={() => setEditingPedido(null)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', lineHeight: 1 }}>&times;</button>
+            </div>
+
+            <form onSubmit={handleUpdate} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', alignItems: 'end' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-dark)', marginBottom: '0.25rem' }}>Cliente</label>
+                <select className="pro-input" value={editFormData.cliente_id} onChange={e => setEditFormData({...editFormData, cliente_id: e.target.value})} required>
+                  <option value="">Seleccione Cliente</option>
+                  {clientes.map((c: any) => (
+                    <option key={c.id} value={c.id}>{c.nombres}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-dark)', marginBottom: '0.25rem' }}>Fecha/Hora de Entrega</label>
+                <input type="datetime-local" className="pro-input" value={editFormData.fecha_entrega} onChange={e => setEditFormData({...editFormData, fecha_entrega: e.target.value})} />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-dark)', marginBottom: '0.25rem' }}>Dirección de Entrega</label>
+                <input type="text" className="pro-input" value={editFormData.direccion_entrega} onChange={e => setEditFormData({...editFormData, direccion_entrega: e.target.value})} required />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-dark)', marginBottom: '0.25rem' }}>Link Ubicación</label>
+                <input type="url" className="pro-input" value={editFormData.link_ubicacion} onChange={e => setEditFormData({...editFormData, link_ubicacion: e.target.value})} />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-dark)', marginBottom: '0.25rem' }}>Vendedor</label>
+                <select className="pro-input" value={editFormData.vendedor_id} onChange={e => setEditFormData({...editFormData, vendedor_id: e.target.value})} required>
+                  <option value="">Seleccione Vendedor</option>
+                  {vendedores.map((v: any) => (
+                    <option key={v.id} value={v.id}>{v.nombre}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-dark)', marginBottom: '0.25rem' }}>Chofer Asignado</label>
+                <select className="pro-input" value={editFormData.conductor_id} onChange={e => setEditFormData({...editFormData, conductor_id: e.target.value})}>
+                  <option value="">No Asignado</option>
+                  {conductores.map((c: any) => (
+                    <option key={c.id} value={c.id}>{c.nombres_apellidos}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-dark)', marginBottom: '0.25rem' }}>Producto</label>
+                <select className="pro-input" value={editFormData.producto_id} onChange={e => setEditFormData({...editFormData, producto_id: e.target.value})} required>
+                  <option value="">Seleccione Producto</option>
+                  {productos.map((p: any) => (
+                    <option key={p.id} value={p.id}>{p.tipo}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-dark)', marginBottom: '0.25rem' }}>Cantidad</label>
+                <input type="number" min="1" className="pro-input" value={editFormData.cantidad} onChange={e => setEditFormData({...editFormData, cantidad: e.target.value})} required />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-dark)', marginBottom: '0.25rem' }}>Origen</label>
+                <select className="pro-input" value={editFormData.origen_id} onChange={e => setEditFormData({...editFormData, origen_id: e.target.value})} required>
+                  <option value="">Seleccione Origen</option>
+                  {almacenes.map((a: any) => (
+                    <option key={a.id} value={a.id}>{a.nombre}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-dark)', marginBottom: '0.25rem' }}>Total a Cobrar</label>
+                <input type="number" step="0.01" min="0" className="pro-input" value={editFormData.total_cobrar} onChange={e => setEditFormData({...editFormData, total_cobrar: e.target.value})} required />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-dark)', marginBottom: '0.25rem' }}>Tipo Pago</label>
+                <select className="pro-input" value={editFormData.tipo_pago} onChange={e => setEditFormData({...editFormData, tipo_pago: e.target.value})} required>
+                  <option value="Efectivo">Efectivo</option>
+                  <option value="Transferencia">Transferencia</option>
+                  <option value="Yape">Yape</option>
+                  <option value="Plin">Plin</option>
+                  <option value="Deposito">Depósito</option>
+                </select>
+              </div>
+
+              {['Transferencia', 'Yape', 'Plin', 'Deposito'].includes(editFormData.tipo_pago) && (
+                <>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-dark)', marginBottom: '0.25rem' }}>Nro. Operación</label>
+                    <input type="text" className="pro-input" value={editFormData.nro_operacion} onChange={e => setEditFormData({...editFormData, nro_operacion: e.target.value})} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-dark)', marginBottom: '0.25rem' }}>Fecha Operación</label>
+                    <input type="date" className="pro-input" value={editFormData.fecha_operacion} onChange={e => setEditFormData({...editFormData, fecha_operacion: e.target.value})} />
+                  </div>
+                </>
+              )}
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gridColumn: '1 / -1', marginTop: '1rem', gap: '0.5rem' }}>
+                <button type="button" onClick={() => setEditingPedido(null)} className="pro-btn-secondary">Cancelar</button>
+                <button type="submit" className="pro-btn" disabled={loading}>
+                  {loading ? 'Guardando...' : 'Guardar Cambios'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
