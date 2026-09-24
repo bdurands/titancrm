@@ -254,7 +254,7 @@ export default function InboxClient({ initialConversaciones }: { initialConversa
                     }`}>
                       {c.nombre_prospecto}
                     </span>
-                    <span className="text-xs text-slate-400 shrink-0">
+                    <span suppressHydrationWarning className="text-xs text-slate-400 shrink-0">
                       {new Date(c.ultima_actividad).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
@@ -317,7 +317,7 @@ export default function InboxClient({ initialConversaciones }: { initialConversa
                   }`}>
                     {m.cuerpo}
                   </div>
-                  <div className={`text-[0.7rem] text-slate-500 mt-1 ${m.es_entrante ? 'text-left' : 'text-right'}`}>
+                  <div suppressHydrationWarning className={`text-[0.7rem] text-slate-500 mt-1 ${m.es_entrante ? 'text-left' : 'text-right'}`}>
                     {new Date(m.fecha).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </div>
                 </div>
