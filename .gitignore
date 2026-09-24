@@ -4,6 +4,13 @@ node_modules/
 # Build output
 .next/
 
+# Environment Variables (CRITICAL)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
 # AI/Editor tool folders
 .agents/
 .claude/

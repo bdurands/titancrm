@@ -134,3 +134,33 @@ export async function recibirTraslado(id_traslado: string) {
     revalidatePath('/dashboard/traslados');
   }
 }
+export async function updateTraslado(id_traslado: string, formData: FormData) {
+  const origen_id = formData.get('origen_id') as string;
+  const destino_id = formData.get('destino_id') as string;
+  const producto_id = formData.get('producto_id') as string;
+  const cantidad = parseInt(formData.get('cantidad') as string, 10);
+  const conductor_id = formData.get('conductor_id') as string;
+
+  if (!origen_id || !destino_id || !producto_id || !conductor_id || isNaN(cantidad) || cantidad <= 0) {
+    return { error: 'Todos los campos son obligatorios y la cantidad debe ser mayor a 0.' };
+  }
+
+  try {
+    // Nota: Como es edición de administrador, actualizamos el registro directo. 
+    // Los ajustes manuales de stock, de ser necesarios, los hará el admin.
+    await prisma.trasladoInterno.update({
+      where: { id_traslado },
+      data: {
+        origen_id,
+        destino_id,
+        producto_id,
+        cantidad,
+        conductor_id
+      }
+    });
+    revalidatePath('/dashboard/traslados');
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message || 'Error al editar el traslado' };
+  }
+}

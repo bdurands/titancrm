@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react';
-import { createConductor, deleteConductor } from './actions';
+import { createConductor, deleteConductor, updateConductor } from './actions';
 
 type Camion = { id: string; placa: string };
 type Conductor = {
@@ -17,6 +17,9 @@ export default function ConductoresClient({ initialConductores, camionesDisponib
   const [isAdding, setIsAdding] = useState(false);
   const [newConductor, setNewConductor] = useState({ nombres_apellidos: '', dni: '', camion_asignado_id: '' });
   const [loading, setLoading] = useState(false);
+
+  const [editingConductor, setEditingConductor] = useState<Conductor | null>(null);
+  const [editForm, setEditForm] = useState({ nombres_apellidos: '', dni: '', camion_asignado_id: '' });
 
   const filteredConductores = conductores.filter(c => 
     c.nombres_apellidos.toLowerCase().includes(filter.toLowerCase()) || 
@@ -52,6 +55,36 @@ export default function ConductoresClient({ initialConductores, camionesDisponib
       window.location.reload();
     } else {
       alert(res.error);
+    }
+  };
+
+  const handleEditClick = (conductor: Conductor) => {
+    setEditForm({
+      nombres_apellidos: conductor.nombres_apellidos,
+      dni: conductor.dni,
+      camion_asignado_id: conductor.camion_asignado?.id || ''
+    });
+    setEditingConductor(conductor);
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingConductor) return;
+    setLoading(true);
+    
+    const formData = new FormData();
+    formData.append('nombres_apellidos', editForm.nombres_apellidos);
+    formData.append('dni', editForm.dni);
+    if (editForm.camion_asignado_id) {
+      formData.append('camion_asignado_id', editForm.camion_asignado_id);
+    }
+    
+    const res = await updateConductor(editingConductor.id, formData);
+    if (res.success) {
+      window.location.reload();
+    } else {
+      alert(res.error);
+      setLoading(false);
     }
   };
 
@@ -175,12 +208,20 @@ export default function ConductoresClient({ initialConductores, camionesDisponib
                     )}
                   </td>
                   <td style={{ textAlign: 'right' }}>
-                    <button 
-                      onClick={() => handleDelete(conductor.id)}
-                      style={{ background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontWeight: 500, fontSize: '0.875rem' }}
-                    >
-                      Eliminar
-                    </button>
+                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                      <button 
+                        onClick={() => handleEditClick(conductor)}
+                        style={{ background: '#f59e0b', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem' }}
+                      >
+                        Editar
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(conductor.id)}
+                        style={{ background: '#ef4444', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem' }}
+                      >
+                        Eliminar
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -188,6 +229,60 @@ export default function ConductoresClient({ initialConductores, camionesDisponib
           </tbody>
         </table>
       </div>
+
+      {editingConductor && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
+          <div className="pro-card" style={{ padding: '2rem', width: '100%', maxWidth: '500px', background: '#fff' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Editar Conductor</h2>
+              <button onClick={() => setEditingConductor(null)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', lineHeight: 1 }}>&times;</button>
+            </div>
+            
+            <form onSubmit={handleUpdate} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-dark)', marginBottom: '0.25rem' }}>Nombres y Apellidos</label>
+                <input 
+                  type="text" 
+                  className="pro-input" 
+                  value={editForm.nombres_apellidos}
+                  onChange={(e) => setEditForm({...editForm, nombres_apellidos: e.target.value})}
+                  required
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-dark)', marginBottom: '0.25rem' }}>DNI</label>
+                <input 
+                  type="text" 
+                  className="pro-input" 
+                  value={editForm.dni}
+                  onChange={(e) => setEditForm({...editForm, dni: e.target.value})}
+                  required
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-dark)', marginBottom: '0.25rem' }}>Camión Asignado</label>
+                <select 
+                  className="pro-input" 
+                  value={editForm.camion_asignado_id}
+                  onChange={(e) => setEditForm({...editForm, camion_asignado_id: e.target.value})}
+                >
+                  <option value="">-- Sin Asignar --</option>
+                  {camionesDisponibles.map(c => (
+                    <option key={c.id} value={c.id}>{c.placa}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem', gap: '0.5rem' }}>
+                <button type="button" onClick={() => setEditingConductor(null)} className="pro-btn-secondary">Cancelar</button>
+                <button type="submit" className="pro-btn" disabled={loading}>
+                  {loading ? 'Guardando...' : 'Guardar Cambios'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

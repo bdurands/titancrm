@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react';
-import { createCamion, deleteCamion } from './actions';
+import { createCamion, deleteCamion, updateCamion } from './actions';
 
 type Camion = {
   id: string;
@@ -18,6 +18,9 @@ export default function FlotaClient({ initialCamiones }: { initialCamiones: Cami
   const [isAdding, setIsAdding] = useState(false);
   const [newCamion, setNewCamion] = useState({ marca: '', modelo: '', placa: '', sinotrack_device_id: '', sinotrack_password: '' });
   const [loading, setLoading] = useState(false);
+
+  const [editingCamion, setEditingCamion] = useState<Camion | null>(null);
+  const [editForm, setEditForm] = useState({ marca: '', modelo: '', placa: '', sinotrack_device_id: '', sinotrack_password: '' });
 
   const filteredCamiones = camiones.filter(c => 
     c.placa.toLowerCase().includes(filter.toLowerCase()) || 
@@ -53,6 +56,38 @@ export default function FlotaClient({ initialCamiones }: { initialCamiones: Cami
       window.location.reload();
     } else {
       alert(res.error);
+    }
+  };
+
+  const handleEditClick = (camion: Camion) => {
+    setEditForm({
+      marca: camion.marca,
+      modelo: camion.modelo,
+      placa: camion.placa,
+      sinotrack_device_id: camion.sinotrack_device_id || '',
+      sinotrack_password: ''
+    });
+    setEditingCamion(camion);
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCamion) return;
+    setLoading(true);
+    
+    const formData = new FormData();
+    formData.append('marca', editForm.marca);
+    formData.append('modelo', editForm.modelo);
+    formData.append('placa', editForm.placa);
+    if (editForm.sinotrack_device_id) formData.append('sinotrack_device_id', editForm.sinotrack_device_id);
+    if (editForm.sinotrack_password) formData.append('sinotrack_password', editForm.sinotrack_password);
+    
+    const res = await updateCamion(editingCamion.id, formData);
+    if (res.success) {
+      window.location.reload();
+    } else {
+      alert(res.error);
+      setLoading(false);
     }
   };
 
@@ -204,12 +239,20 @@ export default function FlotaClient({ initialCamiones }: { initialCamiones: Cami
                     )}
                   </td>
                   <td style={{ textAlign: 'right' }}>
-                    <button 
-                      onClick={() => handleDelete(camion.id)}
-                      style={{ background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontWeight: 500, fontSize: '0.875rem' }}
-                    >
-                      Eliminar
-                    </button>
+                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                      <button 
+                        onClick={() => handleEditClick(camion)}
+                        style={{ background: '#f59e0b', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem' }}
+                      >
+                        Editar
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(camion.id)}
+                        style={{ background: '#ef4444', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem' }}
+                      >
+                        Eliminar
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -217,6 +260,76 @@ export default function FlotaClient({ initialCamiones }: { initialCamiones: Cami
           </tbody>
         </table>
       </div>
+
+      {editingCamion && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
+          <div className="pro-card" style={{ padding: '2rem', width: '100%', maxWidth: '600px', background: '#fff' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Editar Camión</h2>
+              <button onClick={() => setEditingCamion(null)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', lineHeight: 1 }}>&times;</button>
+            </div>
+            
+            <form onSubmit={handleUpdate} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-dark)', marginBottom: '0.25rem' }}>Marca</label>
+                <input 
+                  type="text" 
+                  className="pro-input" 
+                  value={editForm.marca}
+                  onChange={(e) => setEditForm({...editForm, marca: e.target.value})}
+                  required
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-dark)', marginBottom: '0.25rem' }}>Modelo</label>
+                <input 
+                  type="text" 
+                  className="pro-input" 
+                  value={editForm.modelo}
+                  onChange={(e) => setEditForm({...editForm, modelo: e.target.value})}
+                  required
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-dark)', marginBottom: '0.25rem' }}>Placa</label>
+                <input 
+                  type="text" 
+                  className="pro-input" 
+                  value={editForm.placa}
+                  onChange={(e) => setEditForm({...editForm, placa: e.target.value.toUpperCase()})}
+                  required
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-dark)', marginBottom: '0.25rem' }}>ID GPS SinoTrack</label>
+                <input 
+                  type="text" 
+                  className="pro-input" 
+                  value={editForm.sinotrack_device_id}
+                  onChange={(e) => setEditForm({...editForm, sinotrack_device_id: e.target.value})}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-dark)', marginBottom: '0.25rem' }}>Password GPS</label>
+                <input 
+                  type="text" 
+                  className="pro-input" 
+                  placeholder="Dejar en blanco para no cambiar"
+                  value={editForm.sinotrack_password}
+                  onChange={(e) => setEditForm({...editForm, sinotrack_password: e.target.value})}
+                />
+              </div>
+              
+              <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'flex-end', marginTop: '1rem', gap: '0.5rem' }}>
+                <button type="button" onClick={() => setEditingCamion(null)} className="pro-btn-secondary">Cancelar</button>
+                <button type="submit" className="pro-btn" disabled={loading}>
+                  {loading ? 'Guardando...' : 'Guardar Cambios'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -52,3 +52,25 @@ export async function deleteConductor(id: string) {
     return { error: 'Error al eliminar el conductor. Podría estar asociado a traslados o pedidos.' };
   }
 }
+export async function updateConductor(id: string, formData: FormData) {
+  const nombres_apellidos = formData.get('nombres_apellidos') as string;
+  const dni = formData.get('dni') as string;
+  const camion_asignado_id = formData.get('camion_asignado_id') as string | null;
+
+  if (!nombres_apellidos || !dni) return { error: 'Nombres y DNI son requeridos' };
+
+  try {
+    await prisma.conductor.update({
+      where: { id },
+      data: { 
+        nombres_apellidos, 
+        dni, 
+        camion_asignado_id: camion_asignado_id || null 
+      }
+    });
+    revalidatePath('/dashboard/conductores');
+    return { success: true };
+  } catch (error) {
+    return { error: 'Error al editar. Verifica que el DNI no esté duplicado.' };
+  }
+}

@@ -51,3 +51,23 @@ export async function deleteCamion(id: string) {
     return { error: 'Error al eliminar el camión. Podría tener conductores o pedidos asociados.' };
   }
 }
+export async function updateCamion(id: string, formData: FormData) {
+  const marca = formData.get('marca') as string;
+  const modelo = formData.get('modelo') as string;
+  const placa = formData.get('placa') as string;
+  const sinotrack_device_id = formData.get('sinotrack_device_id') as string || null;
+  const sinotrack_password = formData.get('sinotrack_password') as string || null;
+
+  if (!marca || !modelo || !placa) return { error: 'Marca, modelo y placa son requeridos' };
+
+  try {
+    await prisma.camion.update({
+      where: { id },
+      data: { marca, modelo, placa, sinotrack_device_id, sinotrack_password }
+    });
+    revalidatePath('/dashboard/flota');
+    return { success: true };
+  } catch (error) {
+    return { error: 'Error al editar el camión. Verifica que la placa no esté duplicada.' };
+  }
+}

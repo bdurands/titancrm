@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react';
-import { createTraslado, recibirTraslado } from './actions';
+import { createTraslado, recibirTraslado, updateTraslado } from './actions';
 import ExcelJS from 'exceljs';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -28,6 +28,15 @@ export default function TrasladosClient({ initialTraslados, almacenes, productos
   const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
+    origen_id: '',
+    destino_id: '',
+    producto_id: '',
+    cantidad: '',
+    conductor_id: ''
+  });
+
+  const [editingTraslado, setEditingTraslado] = useState<Traslado | null>(null);
+  const [editFormData, setEditFormData] = useState({
     origen_id: '',
     destino_id: '',
     producto_id: '',
@@ -85,6 +94,34 @@ export default function TrasladosClient({ initialTraslados, almacenes, productos
       window.location.reload();
     } else if ('error' in res) {
       alert(res.error);
+    }
+  };
+
+  const handleEditClick = (traslado: Traslado) => {
+    setEditFormData({
+      origen_id: traslado.origen.id,
+      destino_id: traslado.destino.id,
+      producto_id: traslado.producto.id,
+      cantidad: traslado.cantidad.toString(),
+      conductor_id: traslado.conductor.id
+    });
+    setEditingTraslado(traslado);
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTraslado) return;
+    setLoading(true);
+    
+    const data = new FormData();
+    Object.entries(editFormData).forEach(([k, v]) => data.append(k, v));
+    
+    const res = await updateTraslado(editingTraslado.id_traslado, data);
+    if ('success' in res && res.success) {
+      window.location.reload();
+    } else if ('error' in res) {
+      alert(res.error);
+      setLoading(false);
     }
   };
 
@@ -307,14 +344,22 @@ export default function TrasladosClient({ initialTraslados, almacenes, productos
                     )}
                   </td>
                   <td style={{ textAlign: 'right' }}>
-                    {t.estado === 'En tránsito' && (
+                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                       <button 
-                        onClick={() => handleRecibir(t.id_traslado)}
-                        style={{ background: 'var(--primary)', border: 'none', color: '#fff', padding: '0.4rem 0.75rem', borderRadius: '4px', cursor: 'pointer', fontWeight: 500, fontSize: '0.75rem' }}
+                        onClick={() => handleEditClick(t)}
+                        style={{ background: '#f59e0b', border: 'none', color: '#fff', padding: '0.4rem 0.75rem', borderRadius: '4px', cursor: 'pointer', fontWeight: 500, fontSize: '0.75rem' }}
                       >
-                        Marcar Recibido
+                        Editar
                       </button>
-                    )}
+                      {t.estado === 'En tránsito' && (
+                        <button 
+                          onClick={() => handleRecibir(t.id_traslado)}
+                          style={{ background: 'var(--primary)', border: 'none', color: '#fff', padding: '0.4rem 0.75rem', borderRadius: '4px', cursor: 'pointer', fontWeight: 500, fontSize: '0.75rem' }}
+                        >
+                          Recibido
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))
@@ -322,6 +367,72 @@ export default function TrasladosClient({ initialTraslados, almacenes, productos
           </tbody>
         </table>
       </div>
+
+      {editingTraslado && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
+          <div className="pro-card" style={{ padding: '2rem', width: '100%', maxWidth: '600px', background: '#fff' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Editar Traslado</h2>
+              <button onClick={() => setEditingTraslado(null)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', lineHeight: 1 }}>&times;</button>
+            </div>
+            
+            <form onSubmit={handleUpdate} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', alignItems: 'end' }}>
+              
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-dark)', marginBottom: '0.25rem' }}>Origen</label>
+                <select className="pro-input" value={editFormData.origen_id} onChange={e => setEditFormData({...editFormData, origen_id: e.target.value})} required>
+                  <option value="">Seleccione Origen</option>
+                  {almacenes.map((a: any) => (
+                    <option key={a.id} value={a.id}>{a.nombre} {a.es_planta_choque ? '(Planta)' : ''}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-dark)', marginBottom: '0.25rem' }}>Destino</label>
+                <select className="pro-input" value={editFormData.destino_id} onChange={e => setEditFormData({...editFormData, destino_id: e.target.value})} required>
+                  <option value="">Seleccione Destino</option>
+                  {almacenes.map((a: any) => (
+                    <option key={a.id} value={a.id}>{a.nombre}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-dark)', marginBottom: '0.25rem' }}>Producto</label>
+                <select className="pro-input" value={editFormData.producto_id} onChange={e => setEditFormData({...editFormData, producto_id: e.target.value})} required>
+                  <option value="">Seleccione Ladrillo</option>
+                  {productos.map((p: any) => (
+                    <option key={p.id} value={p.id}>{p.tipo}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-dark)', marginBottom: '0.25rem' }}>Cantidad (Unidades)</label>
+                <input type="number" min="1" className="pro-input" value={editFormData.cantidad} onChange={e => setEditFormData({...editFormData, cantidad: e.target.value})} required />
+              </div>
+
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-dark)', marginBottom: '0.25rem' }}>Conductor Encargado</label>
+                <select className="pro-input" value={editFormData.conductor_id} onChange={e => setEditFormData({...editFormData, conductor_id: e.target.value})} required>
+                  <option value="">Seleccione Conductor</option>
+                  {conductores.map((c: any) => (
+                    <option key={c.id} value={c.id}>{c.nombres_apellidos}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gridColumn: '1 / -1', marginTop: '1rem', gap: '0.5rem' }}>
+                <button type="button" onClick={() => setEditingTraslado(null)} className="pro-btn-secondary">Cancelar</button>
+                <button type="submit" className="pro-btn" disabled={loading}>
+                  {loading ? 'Procesando...' : 'Guardar Cambios'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
