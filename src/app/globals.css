@@ -430,9 +430,6 @@ body {
   .inbox-panel-info {
     display: none;
   }
-}
-
-@media (max-width: 768px) {
   .inbox-panel-list {
     width: 100%;
   }
@@ -454,3 +451,4 @@ body {
     display: flex;
   }
 }
+
