@@ -480,15 +480,11 @@ body {
   display: none;
 }
 
-/* Pantallas medianas: ocultar panel de info */
-@media (max-width: 1280px) {
+/* Tablets: sidebar como overlay con hamburguesa + ocultar panel info */
+@media (max-width: 1440px) {
   .inbox-panel-info {
     display: none;
   }
-}
-
-/* Tablets: sidebar como overlay con hamburguesa */
-@media (max-width: 1024px) {
   .dashboard-main {
     padding: 1rem;
     padding-top: 3.5rem;
