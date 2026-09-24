@@ -201,29 +201,36 @@ export default function InboxClient({ initialConversaciones }: { initialConversa
   });
 
   return (
-    <div className="h-[calc(100vh-120px)] flex bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 w-full relative">
+    <div className="inbox-wrapper">
       
       {/* PANEL 1: LISTA DE CHATS */}
-      <div className={`w-full md:w-80 shrink-0 border-r border-gray-200 flex-col bg-slate-50 ${activeChat ? 'hidden md:flex' : 'flex'}`}>
-        <div className="p-4 border-b border-gray-200 bg-white">
-          <h2 className="text-lg font-bold mb-3">Bandeja de Entrada</h2>
+      <div className={`inbox-panel-list ${activeChat ? 'hidden-mobile' : ''}`}>
+        <div style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', background: '#fff' }}>
+          <h2 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '0.75rem' }}>Bandeja de Entrada</h2>
           <input 
             type="text" 
             placeholder="Buscar contacto..." 
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            className="w-full p-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+            className="pro-input"
+            style={{ padding: '0.5rem', fontSize: '0.875rem' }}
           />
-          <div className="flex gap-2 mt-3 overflow-x-auto pb-1 scrollbar-hide">
+          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
             {['Todos', ...ESTADOS].map(estado => (
               <button 
                 key={estado}
                 onClick={() => setFilterEstado(estado)}
-                className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
-                  filterEstado === estado 
-                    ? 'bg-primary text-white' 
-                    : 'bg-slate-200 text-slate-500 hover:bg-slate-300'
-                }`}
+                style={{
+                  padding: '0.25rem 0.75rem',
+                  borderRadius: '12px',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  border: 'none',
+                  cursor: 'pointer',
+                  background: filterEstado === estado ? 'var(--primary)' : '#e2e8f0',
+                  color: filterEstado === estado ? '#fff' : '#64748b',
+                  whiteSpace: 'nowrap'
+                }}
               >
                 {estado}
               </button>
@@ -231,47 +238,44 @@ export default function InboxClient({ initialConversaciones }: { initialConversa
           </div>
         </div>
         
-        <div className="flex-1 overflow-y-auto">
+        <div style={{ flex: 1, overflowY: 'auto' }}>
           {filteredChats.map(c => (
             <div 
               key={c.id} 
               onClick={() => setActiveChat(c)}
-              className={`p-4 border-b border-gray-200 cursor-pointer transition-colors ${
-                activeChat?.id === c.id ? 'bg-indigo-50' : 'bg-white hover:bg-slate-50'
-              }`}
+              style={{
+                padding: '1rem',
+                borderBottom: '1px solid var(--border-color)',
+                cursor: 'pointer',
+                background: activeChat?.id === c.id ? '#eef2ff' : '#fff',
+                transition: 'background 0.2s'
+              }}
             >
-              <div className="flex gap-3 items-center">
-                <div 
-                  className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold shrink-0 bg-cover bg-center"
-                  style={{ backgroundImage: c.foto_perfil ? `url(${c.foto_perfil})` : 'none' }}
-                >
+              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', flexShrink: 0, backgroundImage: c.foto_perfil ? `url(${c.foto_perfil})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center' }}>
                   {!c.foto_perfil && c.nombre_prospecto.charAt(0).toUpperCase()}
                 </div>
-                <div className="flex-1 overflow-hidden">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className={`font-semibold text-sm truncate ${
-                      activeChat?.id === c.id ? 'text-primary' : 'text-slate-900'
-                    }`}>
+                <div style={{ flex: 1, overflow: 'hidden' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                    <span style={{ fontWeight: 600, fontSize: '0.9rem', color: activeChat?.id === c.id ? 'var(--primary)' : '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {c.nombre_prospecto}
                     </span>
-                    <span suppressHydrationWarning className="text-xs text-slate-400 shrink-0">
+                    <span suppressHydrationWarning style={{ fontSize: '0.7rem', color: '#94a3b8', flexShrink: 0 }}>
                       {new Date(c.ultima_actividad).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
-                  <div className="flex gap-2 items-center">
-                    <span className="text-sm">{c.origen === 'whatsapp' ? '🟢' : '🔵'}</span>
-                    <span className="text-xs text-slate-500 truncate">
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.9rem' }}>{c.origen === 'whatsapp' ? '🟢' : '🔵'}</span>
+                    <span style={{ fontSize: '0.8rem', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {c.mensajes.length > 0 ? c.mensajes[c.mensajes.length - 1].cuerpo : 'Sin mensajes'}
                     </span>
                   </div>
                   {c.etiquetas && (
-                    <div className="flex gap-1 mt-1.5 flex-nowrap overflow-hidden">
+                    <div style={{ display: 'flex', gap: '0.25rem', marginTop: '0.35rem', flexWrap: 'nowrap', overflowX: 'hidden' }}>
                       {c.etiquetas.split(',').slice(0, 2).map((t, i) => (
-                        <span key={i} className="bg-indigo-100 text-indigo-700 text-[0.65rem] px-1.5 py-0.5 rounded whitespace-nowrap">
-                          {t.trim()}
-                        </span>
+                        <span key={i} style={{ background: '#e0e7ff', color: '#4338ca', fontSize: '0.65rem', padding: '0.1rem 0.4rem', borderRadius: '4px', whiteSpace: 'nowrap' }}>{t.trim()}</span>
                       ))}
-                      {c.etiquetas.split(',').length > 2 && <span className="text-[0.65rem] text-slate-400">+</span>}
+                      {c.etiquetas.split(',').length > 2 && <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>+</span>}
                     </div>
                   )}
                 </div>
@@ -279,7 +283,7 @@ export default function InboxClient({ initialConversaciones }: { initialConversa
             </div>
           ))}
           {filteredChats.length === 0 && (
-             <div className="p-8 text-center text-slate-400 text-sm">
+             <div style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8', fontSize: '0.875rem' }}>
                No se encontraron chats.
              </div>
           )}
@@ -287,37 +291,41 @@ export default function InboxClient({ initialConversaciones }: { initialConversa
       </div>
 
       {/* PANEL 2: CHAT ACTIVO */}
-      <div className={`flex-1 flex-col bg-[#efeae2] ${!activeChat ? 'hidden md:flex' : 'flex'}`}>
+      <div className={`inbox-panel-chat ${!activeChat ? 'hidden-mobile' : ''}`}>
         {activeChat ? (
           <>
             {/* Header del Chat */}
-            <div className="p-4 bg-white border-b border-gray-200 flex justify-between items-center shrink-0">
-              <div className="flex items-center gap-3">
+            <div style={{ padding: '1rem 1.5rem', background: '#fff', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
                 <button 
+                  className="inbox-back-btn"
                   onClick={() => setActiveChat(null)}
-                  className="md:hidden flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                 </button>
                 <div>
-                  <h3 className="text-lg font-semibold text-slate-900">{activeChat.nombre_prospecto}</h3>
-                  <span className="text-xs text-slate-500">{activeChat.contacto_id}</span>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>{activeChat.nombre_prospecto}</h3>
+                  <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{activeChat.contacto_id}</span>
                 </div>
               </div>
             </div>
 
             {/* Mensajes */}
-            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+            <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {activeChat.mensajes.map((m, i) => (
-                <div key={i} className={`max-w-[85%] md:max-w-[75%] ${m.es_entrante ? 'self-start' : 'self-end'}`}>
-                  <div className={`p-3 text-sm text-slate-900 shadow-sm leading-relaxed ${
-                    m.es_entrante 
-                      ? 'bg-white rounded-tr-xl rounded-br-xl rounded-bl-xl' 
-                      : 'bg-[#dcf8c6] rounded-tl-xl rounded-tr-xl rounded-bl-xl'
-                  }`}>
+                <div key={i} style={{ alignSelf: m.es_entrante ? 'flex-start' : 'flex-end', maxWidth: '75%' }}>
+                  <div style={{ 
+                    background: m.es_entrante ? '#fff' : '#dcf8c6', 
+                    padding: '0.75rem 1rem', 
+                    borderRadius: m.es_entrante ? '0 12px 12px 12px' : '12px 0 12px 12px',
+                    fontSize: '0.9rem', 
+                    color: '#111', 
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                    lineHeight: '1.4'
+                  }}>
                     {m.cuerpo}
                   </div>
-                  <div suppressHydrationWarning className={`text-[0.7rem] text-slate-500 mt-1 ${m.es_entrante ? 'text-left' : 'text-right'}`}>
+                  <div suppressHydrationWarning style={{ fontSize: '0.7rem', color: '#64748b', textAlign: m.es_entrante ? 'left' : 'right', marginTop: '0.25rem' }}>
                     {new Date(m.fecha).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </div>
                 </div>
@@ -326,19 +334,16 @@ export default function InboxClient({ initialConversaciones }: { initialConversa
             </div>
 
             {/* Respuestas Rápidas */}
-            <div className="p-2 bg-white border-t border-gray-200 shrink-0">
-              <div className="flex gap-2 overflow-x-auto items-center pb-1 scrollbar-hide">
-                <span 
-                  className="text-xs font-semibold text-slate-400 flex items-center cursor-pointer shrink-0"
-                  onClick={() => setIsConfiguringRespuestas(!isConfiguringRespuestas)}
-                >
+            <div style={{ padding: '0.5rem 1.5rem', background: '#fff', borderTop: '1px solid var(--border-color)' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={() => setIsConfiguringRespuestas(!isConfiguringRespuestas)}>
                   ⚡ Rápidas (⚙️):
                 </span>
                 {respuestasRapidas.map((rr, i) => (
                   <button 
                     key={i} 
                     onClick={() => setMensajeText(rr)} 
-                    className="shrink-0 bg-slate-50 text-slate-600 border border-slate-200 rounded-full px-3 py-1.5 text-xs whitespace-nowrap cursor-pointer hover:bg-slate-100 transition-colors"
+                    style={{ background: '#f8fafc', color: '#475569', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '0.3rem 0.6rem', fontSize: '0.75rem', whiteSpace: 'nowrap', cursor: 'pointer', transition: 'background 0.2s' }}
                   >
                     {rr.length > 25 ? rr.substring(0, 25) + '...' : rr}
                   </button>
@@ -346,140 +351,132 @@ export default function InboxClient({ initialConversaciones }: { initialConversa
               </div>
               
               {isConfiguringRespuestas && (
-                <div className="mt-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
-                  <h4 className="text-xs font-semibold text-slate-600 mb-2">Configurar Respuestas Rápidas</h4>
-                  <div className="flex flex-col gap-1.5 mb-3">
+                <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <h4 style={{ fontSize: '0.75rem', fontWeight: 600, color: '#475569', marginBottom: '0.5rem' }}>Configurar Respuestas Rápidas</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginBottom: '0.75rem' }}>
                     {respuestasRapidas.map((rr, i) => (
-                      <div key={i} className="flex justify-between items-center bg-white px-2 py-1.5 rounded border border-slate-200">
-                        <span className="text-xs text-slate-700 truncate mr-2">{rr}</span>
-                        <button onClick={() => handleRemoveRespuesta(i)} className="text-red-500 hover:text-red-700 text-lg leading-none">&times;</button>
+                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', padding: '0.25rem 0.5rem', borderRadius: '4px', border: '1px solid #e2e8f0' }}>
+                        <span style={{ fontSize: '0.75rem', color: '#334155' }}>{rr}</span>
+                        <button onClick={() => handleRemoveRespuesta(i)} style={{ color: '#ef4444', border: 'none', background: 'none', cursor: 'pointer' }}>✖</button>
                       </div>
                     ))}
                   </div>
-                  <form onSubmit={handleAddRespuesta} className="flex gap-2">
-                    <input 
-                      type="text" 
-                      value={newRespuesta} 
-                      onChange={e => setNewRespuesta(e.target.value)} 
-                      placeholder="Nueva respuesta rápida..." 
-                      className="flex-1 p-2 text-xs border border-slate-300 rounded focus:outline-none focus:ring-1 focus:ring-primary" 
-                    />
-                    <button type="submit" className="bg-primary text-white px-3 py-1.5 text-xs rounded hover:bg-primary/90">Añadir</button>
+                  <form onSubmit={handleAddRespuesta} style={{ display: 'flex', gap: '0.5rem' }}>
+                    <input type="text" value={newRespuesta} onChange={e => setNewRespuesta(e.target.value)} placeholder="Nueva respuesta rápida..." className="pro-input" style={{ padding: '0.4rem 0.5rem', fontSize: '0.75rem', flex: 1 }} />
+                    <button type="submit" className="pro-btn" style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem' }}>Añadir</button>
                   </form>
                 </div>
               )}
             </div>
 
             {/* Input */}
-            <div className="p-3 md:p-4 bg-[#f0f2f5] shrink-0">
-              <form onSubmit={handleSend} className="flex gap-2 md:gap-3">
+            <div style={{ padding: '1rem 1.5rem', background: '#f0f2f5' }}>
+              <form onSubmit={handleSend} style={{ display: 'flex', gap: '0.75rem' }}>
                 <input 
                   type="text" 
                   value={mensajeText}
                   onChange={e => setMensajeText(e.target.value)}
                   placeholder="Escribe un mensaje..."
-                  className="flex-1 p-3 md:p-4 rounded-full border-none outline-none text-sm shadow-sm"
+                  style={{ flex: 1, padding: '1rem', borderRadius: '24px', border: 'none', outline: 'none', fontSize: '0.9rem', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}
                 />
-                <button type="submit" className="bg-[#00a884] hover:bg-[#008f6f] text-white rounded-full w-12 h-12 flex items-center justify-center shrink-0 shadow-sm transition-colors">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                <button type="submit" style={{ background: '#00a884', color: 'white', border: 'none', borderRadius: '50%', width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
+                  ➤
                 </button>
               </form>
             </div>
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center text-slate-400 flex-col">
-            <div className="text-5xl mb-4">💬</div>
-            <h2 className="text-xl">Selecciona un chat para empezar</h2>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', flexDirection: 'column' }}>
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>💬</div>
+            <h2>Selecciona un chat para empezar</h2>
           </div>
         )}
       </div>
 
       {/* PANEL 3: INFO DEL CONTACTO */}
       {activeChat && (
-        <div className="w-72 shrink-0 border-l border-gray-200 bg-white flex-col hidden xl:flex">
-          <div className="p-6 border-b border-gray-200 text-center">
-             <div 
-               className="w-16 h-16 bg-primary text-white rounded-full flex items-center justify-center text-2xl font-semibold mx-auto mb-4 bg-cover bg-center"
-               style={{ backgroundImage: activeChat.foto_perfil ? `url(${activeChat.foto_perfil})` : 'none' }}
-             >
+        <div className="inbox-panel-info">
+          <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)', textAlign: 'center' }}>
+             <div style={{ width: '64px', height: '64px', background: 'var(--primary)', color: '#fff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 600, margin: '0 auto 1rem', backgroundImage: activeChat.foto_perfil ? `url(${activeChat.foto_perfil})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center' }}>
                {!activeChat.foto_perfil && activeChat.nombre_prospecto.charAt(0).toUpperCase()}
              </div>
              
              {isEditingName ? (
-                <div className="flex gap-1 justify-center items-center">
-                  <input type="text" value={tempName} onChange={e => setTempName(e.target.value)} className="p-1 text-sm border rounded w-32 focus:outline-none focus:ring-1 focus:ring-primary" autoFocus />
-                  <button onClick={handleSaveName} className="bg-emerald-500 text-white p-1 rounded hover:bg-emerald-600"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>
-                  <button onClick={() => setIsEditingName(false)} className="bg-red-500 text-white p-1 rounded hover:bg-red-600"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                <div style={{ display: 'flex', gap: '0.25rem', justifyContent: 'center' }}>
+                  <input type="text" value={tempName} onChange={e => setTempName(e.target.value)} className="pro-input" style={{ padding: '0.25rem 0.5rem', fontSize: '0.9rem', width: '150px' }} autoFocus />
+                  <button onClick={handleSaveName} style={{ background: 'var(--success)', color: 'white', border: 'none', borderRadius: '4px', padding: '0 0.5rem', cursor: 'pointer' }}>✓</button>
+                  <button onClick={() => setIsEditingName(false)} style={{ background: 'var(--danger)', color: 'white', border: 'none', borderRadius: '4px', padding: '0 0.5rem', cursor: 'pointer' }}>X</button>
                 </div>
              ) : (
-                <h3 className="text-lg font-bold flex items-center justify-center gap-2 text-slate-900">
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
                   {activeChat.nombre_prospecto}
-                  <button onClick={() => setIsEditingName(true)} className="text-slate-400 hover:text-slate-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-                  </button>
+                  <span onClick={() => setIsEditingName(true)} style={{ fontSize: '0.8rem', cursor: 'pointer', color: '#94a3b8' }}>✏️</span>
                 </h3>
              )}
 
-             <p className="text-xs text-slate-500 mt-1">{activeChat.origen === 'whatsapp' ? 'WhatsApp Business' : 'Facebook Messenger'}</p>
+             <p style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.25rem' }}>{activeChat.origen === 'whatsapp' ? 'WhatsApp Business' : 'Facebook Messenger'}</p>
           </div>
           
-          <div className="p-6 flex-1 overflow-y-auto">
-            <h4 className="text-xs uppercase text-slate-400 font-bold mb-3 tracking-wider">Detalles</h4>
+          <div style={{ padding: '1.5rem', flex: 1, overflowY: 'auto' }}>
+            <h4 style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#94a3b8', fontWeight: 700, marginBottom: '0.75rem' }}>Detalles</h4>
             
-            <div className="mb-4">
-              <label className="text-xs text-slate-500 block mb-1">Teléfono / ID</label>
-              <div className="text-sm font-medium text-slate-800">{activeChat.contacto_id}</div>
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ fontSize: '0.75rem', color: '#64748b' }}>Teléfono / ID</label>
+              <div style={{ fontSize: '0.9rem', fontWeight: 500 }}>{activeChat.contacto_id}</div>
             </div>
 
-            <div className="mb-6">
-              <label className="text-xs text-slate-500 block mb-1">Estado del Lead</label>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ fontSize: '0.75rem', color: '#64748b', display: 'block', marginBottom: '0.25rem' }}>Estado del Lead</label>
               <select 
                 value={activeChat.estado} 
                 onChange={(e) => handleStateChange(e.target.value)}
-                className="w-full p-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                className="pro-input"
+                style={{ padding: '0.5rem', fontSize: '0.85rem' }}
               >
                 {ESTADOS.map(op => <option key={op} value={op}>{op}</option>)}
               </select>
             </div>
 
-            <hr className="border-t border-gray-200 my-6" />
+            <hr style={{ border: 'none', borderTop: '1px solid var(--border-color)', margin: '1.5rem 0' }} />
 
-            <h4 className="text-xs uppercase text-slate-400 font-bold mb-3 tracking-wider">Etiquetas</h4>
-            <div className="flex flex-wrap gap-1.5 mb-3">
+            <h4 style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#94a3b8', fontWeight: 700, marginBottom: '0.75rem' }}>Etiquetas</h4>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.5rem' }}>
               {activeChat.etiquetas?.split(',').map((t, i) => t.trim() ? (
-                <span key={i} className="bg-indigo-100 text-indigo-700 text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                <span key={i} style={{ background: '#e0e7ff', color: '#4338ca', fontSize: '0.75rem', padding: '0.2rem 0.5rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                   {t.trim()}
-                  <button onClick={() => handleRemoveTag(t.trim())} className="opacity-60 hover:opacity-100">&times;</button>
+                  <span onClick={() => handleRemoveTag(t.trim())} style={{ cursor: 'pointer', opacity: 0.6 }}>&times;</span>
                 </span>
               ) : null)}
             </div>
-            <form onSubmit={handleAddTag} className="flex gap-2 mb-6">
-              <input type="text" placeholder="Nueva etiqueta..." value={tagInput} onChange={e => setTagInput(e.target.value)} className="flex-1 p-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-primary" />
-              <button type="submit" className="bg-primary text-white px-2.5 py-1.5 text-xs rounded hover:bg-primary/90">+</button>
+            <form onSubmit={handleAddTag} style={{ display: 'flex', gap: '0.25rem', marginBottom: '1.5rem' }}>
+              <input type="text" placeholder="Nueva etiqueta..." value={tagInput} onChange={e => setTagInput(e.target.value)} className="pro-input" style={{ padding: '0.3rem 0.5rem', fontSize: '0.75rem' }} />
+              <button type="submit" className="pro-btn" style={{ padding: '0.3rem 0.5rem', fontSize: '0.75rem' }}>+</button>
             </form>
 
-            <h4 className="text-xs uppercase text-slate-400 font-bold mb-3 tracking-wider">Notas Internas</h4>
+            <h4 style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#94a3b8', fontWeight: 700, marginBottom: '0.75rem' }}>Notas Internas</h4>
             <textarea 
               value={notasText} 
               onChange={e => setNotasText(e.target.value)}
+              className="pro-input" 
               placeholder="Anota algo sobre este cliente..."
-              className="w-full min-h-[80px] p-2 text-sm border border-gray-300 rounded resize-y mb-2 focus:outline-none focus:ring-1 focus:ring-primary"
+              style={{ width: '100%', minHeight: '80px', padding: '0.5rem', fontSize: '0.85rem', resize: 'vertical', marginBottom: '0.5rem' }}
             />
-            <button onClick={handleSaveNotas} className="w-full bg-slate-100 text-slate-700 py-2 text-xs font-semibold rounded hover:bg-slate-200 transition-colors">Guardar Notas</button>
+            <button onClick={handleSaveNotas} className="pro-btn-secondary" style={{ width: '100%', padding: '0.4rem', fontSize: '0.75rem', borderRadius: '6px' }}>Guardar Notas</button>
 
-            <hr className="border-t border-gray-200 my-6" />
+            <hr style={{ border: 'none', borderTop: '1px solid var(--border-color)', margin: '1.5rem 0' }} />
 
             {activeChat.estado !== 'Convertidos' && (
               <button 
                 onClick={handleConvert} 
-                className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white py-2.5 text-sm font-semibold rounded-lg hover:from-emerald-600 hover:to-emerald-700 transition-colors shadow-sm"
+                className="pro-btn" 
+                style={{ width: '100%', background: 'linear-gradient(135deg, #10b981, #059669)', fontSize: '0.85rem' }}
               >
                 ⭐ Convertir a Cliente
               </button>
             )}
             
             {activeChat.estado === 'Convertidos' && (
-              <div className="text-center p-3 bg-emerald-50 text-emerald-700 rounded-lg text-sm font-semibold border border-emerald-100">
+              <div style={{ textAlign: 'center', padding: '0.75rem', background: '#ecfdf5', color: '#059669', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 600 }}>
                 ✓ Cliente Oficial
               </div>
             )}
