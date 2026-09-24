@@ -426,10 +426,28 @@ body {
   margin-right: 0.75rem;
 }
 
-@media (max-width: 1024px) {
+/* Pantallas medianas: ocultar panel de info */
+@media (max-width: 1280px) {
   .inbox-panel-info {
     display: none;
   }
+}
+
+/* Tablets: lista más angosta para dar espacio al chat */
+@media (max-width: 1024px) {
+  .inbox-panel-list {
+    width: 240px;
+  }
+}
+
+@media (max-width: 768px) {
+  .inbox-panel-list {
+    width: 200px;
+  }
+}
+
+/* Celulares: un panel a la vez */
+@media (max-width: 640px) {
   .inbox-panel-list {
     width: 100%;
   }
@@ -451,4 +469,3 @@ body {
     display: flex;
   }
 }
-
