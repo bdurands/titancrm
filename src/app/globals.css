@@ -374,6 +374,15 @@ body {
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
+/* ─── Dashboard Main ─────────────────────────────────── */
+.dashboard-main {
+  flex: 1;
+  background-color: #f1f5f9;
+  padding: 2.5rem;
+  overflow-y: auto;
+  min-height: 100vh;
+}
+
 /* ─── Inbox Responsive ────────────────────────────────── */
 .inbox-wrapper {
   height: calc(100vh - 120px);
@@ -435,6 +444,12 @@ body {
 
 /* Tablets: sidebar colapsado a solo íconos + lista compacta */
 @media (max-width: 1024px) {
+  .dashboard-main {
+    padding: 1rem;
+  }
+  .inbox-wrapper {
+    height: calc(100vh - 32px);
+  }
   .sidebar {
     width: 70px;
     overflow: hidden;
@@ -481,6 +496,12 @@ body {
 
 /* Celulares: un panel a la vez */
 @media (max-width: 640px) {
+  .dashboard-main {
+    padding: 0.5rem;
+  }
+  .inbox-wrapper {
+    height: calc(100vh - 16px);
+  }
   .sidebar {
     display: none;
   }
