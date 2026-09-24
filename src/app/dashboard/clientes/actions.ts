@@ -49,3 +49,21 @@ export async function deleteCliente(id: string) {
     return { error: 'Error al eliminar. Podría estar asociado a pedidos.' };
   }
 }
+
+export async function updateCliente(id: string, formData: FormData) {
+  const nombres = formData.get('nombres') as string;
+  const celular = formData.get('celular') as string || '';
+
+  if (!nombres) return { error: 'El nombre es requerido' };
+
+  try {
+    await prisma.cliente.update({
+      where: { id },
+      data: { nombres, celular }
+    });
+    revalidatePath('/dashboard/clientes');
+    return { success: true };
+  } catch (error) {
+    return { error: 'Error al actualizar el cliente.' };
+  }
+}

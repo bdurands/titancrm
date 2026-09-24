@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react';
-import { createCliente, deleteCliente } from './actions';
+import { createCliente, deleteCliente, updateCliente } from './actions';
 
 type Cliente = {
   id: string;
@@ -15,6 +15,9 @@ export default function ClientesClient({ initialClientes }: { initialClientes: C
   const [isAdding, setIsAdding] = useState(false);
   const [newCliente, setNewCliente] = useState({ nombres: '', celular: '' });
   const [loading, setLoading] = useState(false);
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ nombres: '', celular: '' });
 
   const filteredClientes = clientes.filter(c => 
     c.nombres.toLowerCase().includes(filter.toLowerCase()) || 
@@ -43,6 +46,30 @@ export default function ClientesClient({ initialClientes }: { initialClientes: C
     if (!confirm('¿Seguro que deseas eliminar a este cliente?')) return;
     
     const res = await deleteCliente(id);
+    if (res.success) {
+      window.location.reload();
+    } else {
+      alert(res.error);
+    }
+  };
+
+  const handleEditClick = (cliente: Cliente) => {
+    setEditingId(cliente.id);
+    setEditForm({ nombres: cliente.nombres, celular: cliente.celular || '' });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+  };
+
+  const handleSaveEdit = async (id: string) => {
+    if (!editForm.nombres) return;
+    
+    const formData = new FormData();
+    formData.append('nombres', editForm.nombres);
+    formData.append('celular', editForm.celular);
+    
+    const res = await updateCliente(id, formData);
     if (res.success) {
       window.location.reload();
     } else {
@@ -145,16 +172,51 @@ export default function ClientesClient({ initialClientes }: { initialClientes: C
             ) : (
               filteredClientes.map(cliente => (
                 <tr key={cliente.id}>
-                  <td style={{ fontWeight: 600, color: 'var(--text-dark)' }}>{cliente.nombres}</td>
-                  <td>{cliente.celular || '-'}</td>
-                  <td style={{ textAlign: 'right' }}>
-                    <button 
-                      onClick={() => handleDelete(cliente.id)}
-                      style={{ background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontWeight: 500, fontSize: '0.875rem' }}
-                    >
-                      Eliminar
-                    </button>
-                  </td>
+                  {editingId === cliente.id ? (
+                    <>
+                      <td>
+                        <input 
+                          type="text" 
+                          className="pro-input" 
+                          value={editForm.nombres} 
+                          onChange={e => setEditForm({...editForm, nombres: e.target.value})}
+                          style={{ width: '100%' }}
+                        />
+                      </td>
+                      <td>
+                        <input 
+                          type="text" 
+                          className="pro-input" 
+                          value={editForm.celular} 
+                          onChange={e => setEditForm({...editForm, celular: e.target.value})}
+                          style={{ width: '100%' }}
+                        />
+                      </td>
+                      <td style={{ textAlign: 'right', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                        <button onClick={() => handleSaveEdit(cliente.id)} style={{ background: 'var(--success)', color: 'white', border: 'none', padding: '0.25rem 0.75rem', borderRadius: '4px', cursor: 'pointer' }}>Guardar</button>
+                        <button onClick={handleCancelEdit} style={{ background: '#e2e8f0', color: '#475569', border: 'none', padding: '0.25rem 0.75rem', borderRadius: '4px', cursor: 'pointer' }}>Cancelar</button>
+                      </td>
+                    </>
+                  ) : (
+                    <>
+                      <td style={{ fontWeight: 600, color: 'var(--text-dark)' }}>{cliente.nombres}</td>
+                      <td>{cliente.celular || '-'}</td>
+                      <td style={{ textAlign: 'right', display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+                        <button 
+                          onClick={() => handleEditClick(cliente)}
+                          style={{ background: 'transparent', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontWeight: 500, fontSize: '0.875rem' }}
+                        >
+                          Editar
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(cliente.id)}
+                          style={{ background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontWeight: 500, fontSize: '0.875rem' }}
+                        >
+                          Eliminar
+                        </button>
+                      </td>
+                    </>
+                  )}
                 </tr>
               ))
             )}
