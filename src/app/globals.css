@@ -433,21 +433,57 @@ body {
   }
 }
 
-/* Tablets: lista más angosta para dar espacio al chat */
+/* Tablets: sidebar colapsado a solo íconos + lista compacta */
 @media (max-width: 1024px) {
-  .inbox-panel-list {
-    width: 240px;
+  .sidebar {
+    width: 70px;
+    overflow: hidden;
   }
-}
-
-@media (max-width: 768px) {
+  .sidebar-header {
+    padding: 1rem 0.5rem;
+    text-align: center;
+  }
+  .sidebar-logo {
+    font-size: 1rem;
+  }
+  .sidebar-subtitle {
+    display: none;
+  }
+  .sidebar-nav {
+    padding: 0.5rem;
+  }
+  .nav-link,
+  .nav-link-leads,
+  .nav-link-admin,
+  .nav-link-logout {
+    justify-content: center;
+    padding: 0.75rem;
+    font-size: 0;
+    gap: 0;
+    overflow: hidden;
+  }
+  .nav-link svg,
+  .nav-link-leads svg,
+  .nav-link-admin svg,
+  .nav-link-logout svg {
+    flex-shrink: 0;
+  }
+  .sidebar-footer {
+    padding: 0.5rem;
+  }
+  .nav-section-divider {
+    margin: 0.5rem 0;
+  }
   .inbox-panel-list {
-    width: 200px;
+    width: 280px;
   }
 }
 
 /* Celulares: un panel a la vez */
 @media (max-width: 640px) {
+  .sidebar {
+    display: none;
+  }
   .inbox-panel-list {
     width: 100%;
   }
@@ -469,3 +505,4 @@ body {
     display: flex;
   }
 }
+
